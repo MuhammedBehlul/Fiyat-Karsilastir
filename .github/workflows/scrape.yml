@@ -1,0 +1,31 @@
+name: Günlük fiyat scraping
+
+on:
+  schedule:
+    # Her gün 03:30 UTC = 06:30 TR — site trafiğinin en düşük olduğu saatler
+    - cron: '30 3 * * *'
+  workflow_dispatch: # elle tetikleme
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Playwright Chromium kur
+        run: npx playwright install --with-deps chromium
+
+      - name: Scraper'ları çalıştır
+        run: npm run scrape
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}

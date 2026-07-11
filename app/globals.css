@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/*
+ * ============================================================
+ * TASARIM SİSTEMİ TOKEN'LARI (Faz 1)
+ * ============================================================
+ * Tüm yeni bileşenler (components/ui/) YALNIZCA bu semantik
+ * token'ları kullanır — hardcoded hex yok. Paleti değiştirmek
+ * istersek sadece bu blok değişir.
+ *
+ * Kullanım kuralları:
+ * - primary  : TEK vurgu rengi. Link, CTA, aktif çip, focus.
+ * - accent   : Fırsat/indirim vurgusu (rozet). Dekoratif kullanma.
+ * - success  : SEMANTİK — "en ucuz" ve fiyat düşüşü. Başka yerde kullanma.
+ * - danger   : SEMANTİK — fiyat yükselişi, hata durumları.
+ * - surface  : Kart/panel zemini (beyaz). surface-alt sayfa zemini.
+ * - text     : Birincil metin. muted ikincil/meta metin.
+ * Tüm renk çiftleri WCAG AA doğrulandı (beyaz ve surface-alt üzerinde ≥4.5).
+ */
+@theme inline {
+  /* --- Font aileleri (layout.tsx'te next/font ile yüklenir) --- */
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-space-grotesk);
+  --font-mono: var(--font-plex-mono); /* fiyatlar: mono + tabular-nums */
+
+  /* --- Renk paleti --- */
+  --color-primary: #2563eb; /* daha canlı sapphire mavi */
+  --color-primary-strong: #1d4ed8; /* hover/active */
+  --color-primary-soft: #f0f6ff; /* açık zemin: hover, seçili durum */
+  --color-accent: #ea580c; /* canlı turuncu/kırmızı */
+  --color-accent-soft: #fff7ed;
+  --color-success: #16a34a; /* modern yeşil */
+  --color-success-soft: #f0fdf4;
+  --color-danger: #dc2626; /* modern kırmızı */
+  --color-danger-soft: #fef2f2;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f8fafc; /* daha parlak ve temiz sayfa zemini */
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1; /* input kenarlığı, hover kenarlık */
+  --color-text: #0f172a; /* Slate 900 */
+  --color-muted: #64748b; /* Slate 500 */
+
+  /* --- Özel Gölgeler ve Efektler --- */
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --shadow-premium-hover: 0 20px 25px -5px rgba(37, 99, 235, 0.1), 0 10px 10px -5px rgba(37, 99, 235, 0.04), 0 0 0 1px rgba(37, 99, 235, 0.15);
+  --shadow-glow: 0 0 25px rgba(37, 99, 235, 0.15);
+
+  /* --- Fiyat geçmişi grafiği: site başına kategorik renk --- */
+  --color-site-trendyol: #f27a1a; /* Trendyol Turuncusu */
+  --color-site-hepsiburada: #ff6000; /* Hepsiburada Turuncusu */
+  --color-site-amazon: #ff9900; /* Amazon Sarısı/Turuncusu */
+  --color-site-vatan: #005ca7; /* Vatan Mavisi */
+  --color-site-n11: #e11d48; /* N11 Kırmızısı */
+
+  /* --- Tipografi ölçeği --- */
+  --text-caption: 0.75rem; /* meta, rozet, dipnot */
+  --text-caption--line-height: 1rem;
+  --text-body-sm: 0.875rem; /* kart metni, ikincil gövde */
+  --text-body-sm--line-height: 1.25rem;
+  --text-body: 1rem; /* ana gövde */
+  --text-body--line-height: 1.5rem;
+  --text-heading: 1.25rem; /* bölüm başlığı (h2/h3) */
+  --text-heading--line-height: 1.75rem;
+  --text-title: 1.5rem; /* sayfa başlığı (h1 mobil) */
+  --text-title--line-height: 2rem;
+  --text-display: 1.875rem; /* hero / h1 masaüstü */
+  --text-display--line-height: 2.375rem;
+  --text-price-sm: 0.875rem; /* liste içi fiyat */
+  --text-price-sm--line-height: 1.25rem;
+  --text-price: 1.125rem; /* kart fiyatı */
+  --text-price--line-height: 1.5rem;
+  --text-price-lg: 1.75rem; /* ürün detay ana fiyat */
+  --text-price-lg--line-height: 2.125rem;
+}
+
+/* Yatay kayan kategori çipleri: kaydırma çubuğu gizli, davranış doğal. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

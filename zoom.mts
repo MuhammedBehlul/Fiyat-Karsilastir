@@ -1,0 +1,12 @@
+import { writeFileSync } from 'node:fs';
+import { chromium } from 'playwright';
+const sp = process.env.SP!;
+const b = await chromium.launch();
+const page = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+await page.goto('http://localhost:3000/', { waitUntil: 'networkidle' });
+await page.waitForTimeout(1000);
+const card = page.locator('a[href="/urun/4"]').first();
+await card.screenshot({ path: sp + '/screens/card-zoom.png' });
+const html = await card.innerHTML();
+writeFileSync(sp + '/screens/card.html', html);
+await b.close();
