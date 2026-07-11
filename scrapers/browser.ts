@@ -52,10 +52,19 @@ export async function fetchHtmlWithBrowser(
         // selector gelmese de eldeki HTML ile devam et; parse aşaması boş dönerse hata zaten görünür
       });
     }
-    // Lazy-load edilen kartları tetiklemek için sayfayı kademeli kaydır.
-    for (let i = 0; i < 4; i++) {
-      await page.mouse.wheel(0, 1500);
-      await page.waitForTimeout(700);
+    // Lazy-load edilen kartları tetiklemek için sayfanın SONUNA kadar kademeli
+    // kaydır: 4 sabit adım alt sıradaki kartların görsellerini hiç tetiklemiyordu
+    // (958 varyant görselsiz kalmıştı). Üst sınır güvenlik içindir (sonsuz feed).
+    for (let i = 0; i < 15; i++) {
+      const { reachedBottom } = await page.evaluate(() => {
+        window.scrollBy(0, 1800);
+        return {
+          reachedBottom:
+            window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 200,
+        };
+      });
+      await page.waitForTimeout(500);
+      if (reachedBottom) break;
     }
     return { ssrHtml, domHtml: await page.content() };
   } finally {

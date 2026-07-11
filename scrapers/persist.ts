@@ -16,10 +16,24 @@ import {
   type CatalogVariant,
 } from '../lib/matching';
 import { politeDelay } from './http';
+import type { DetailInfo } from './engine';
 import { CATEGORIES, type CategorySlug, type ScrapedProduct, type SiteName } from '../lib/types';
 
-/** Ürün detay sayfasından yapılandırılmış nitelik getirir (ör. N11 renk alanı). */
-export type DetailEnricher = (url: string) => Promise<Partial<VariantAttrs>>;
+/**
+ * "Bu kayıttaki görsel değiştirilebilir" koşulları — lib/normalize.ts'teki
+ * isSuspectImageUrl ile AYNI desenlerin Prisma karşılığı (sorguda regex yok):
+ * null, placeholder, kampanya bandı (/banners/), svg. Desenler değişirse iki
+ * yer birlikte güncellenir.
+ */
+const SUSPECT_IMAGE_CONDITIONS = [
+  { imageUrl: null },
+  { imageUrl: { contains: 'placeholder' } },
+  { imageUrl: { contains: '/banners/' } },
+  { imageUrl: { endsWith: '.svg' } },
+];
+
+/** Ürün detay sayfasından yapılandırılmış nitelik + görsel getirir (ör. N11). */
+export type DetailEnricher = (url: string) => Promise<DetailInfo>;
 
 export interface SaveOptions {
   /** Başlıkta renk yoksa detay sayfasına başvurulacak fonksiyon. */
@@ -117,6 +131,9 @@ export async function saveProducts(
           parsed.attrs.color = detail.color ?? parsed.attrs.color;
           parsed.attrs.storageGb = parsed.attrs.storageGb ?? detail.storageGb ?? null;
           parsed.attrs.ramGb = parsed.attrs.ramGb ?? detail.ramGb ?? null;
+          // Aynı yanıttan gelen ürün görseli: listelemede lazy-load yüzünden
+          // görsel yakalanamadıysa (N11'de yaygın) buradan doldurulur.
+          p.imageUrl = p.imageUrl ?? detail.imageUrl;
           if (detail.color) outcome.enriched++;
         } catch (err) {
           console.warn(`  ⚠ detay zenginleştirme başarısız (${p.productUrl}): ${(err as Error).message}`);
@@ -242,14 +259,16 @@ export async function saveProducts(
     });
     outcome.upserted++;
 
-    // Görseli olmayan kayda sonradan gelen görseli ekle.
+    // Görsel iyileştirme: kayıtta görsel yoksa YA DA şüpheli bir görsel
+    // (placeholder/rozet/svg — eski taramalardan kalma) duruyorsa temiz gelenle
+    // değiştir. Scraper'lar pickImageUrl'den geçirdiği için p.imageUrl temizdir.
     if (p.imageUrl) {
       await prisma.productVariant.updateMany({
-        where: { id: variant.id, imageUrl: null },
+        where: { id: variant.id, OR: SUSPECT_IMAGE_CONDITIONS },
         data: { imageUrl: p.imageUrl },
       });
       await prisma.product.updateMany({
-        where: { id: product.id, imageUrl: null },
+        where: { id: product.id, OR: SUSPECT_IMAGE_CONDITIONS },
         data: { imageUrl: p.imageUrl },
       });
     }

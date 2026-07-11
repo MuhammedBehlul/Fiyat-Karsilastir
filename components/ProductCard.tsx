@@ -64,6 +64,7 @@ export default function ProductCard({ product }: { product: ProductWithPrices })
             src={product.imageUrl ?? '/placeholder.svg'}
             alt={product.name}
             loading="lazy"
+            referrerPolicy="no-referrer"
             className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
           />
         </div>

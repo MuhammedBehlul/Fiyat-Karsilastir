@@ -36,6 +36,26 @@ const KNOWN_NO_IMAGE_URLS = new Set([
 ]);
 
 /**
+ * URL bir ürün fotoğrafı OLAMAZ mı? Tek gerçek kaynak — pickImageUrl,
+ * persist'teki görsel iyileştirme ve cleanup-images script'i aynı karara dayanır.
+ * Canlı veride görülen desenler:
+ *  - lazy-load iskeleti: data: URI ya da adında "placeholder" (Trendyol
+ *    cdn.dsmcdn.com/sfweb-search/images/trendyol-product-card-placeholder_*.svg)
+ *  - kampanya rozeti/bandı: images.hepsiburada.net/banners/... ("5G DESTEKLİ" vb.)
+ *  - "görsel yok" ikonları: .svg — bu sitelerin gerçek ürün fotoğrafları hiçbir
+ *    zaman SVG değildir, uzantıyı komple elemek güvenli.
+ * DİKKAT: buradaki desenleri değiştirirsen scrapers/persist.ts içindeki
+ * SUSPECT_IMAGE_CONDITIONS listesini de eşitle (Prisma sorgusunda regex yok).
+ */
+export function isSuspectImageUrl(url: string): boolean {
+  if (url.startsWith('data:')) return true;
+  if (/placeholder/i.test(url)) return true;
+  if (/\/banners\//.test(url)) return true;
+  if (/\.svg(\?|$)/i.test(url)) return true;
+  return KNOWN_NO_IMAGE_URLS.has(url);
+}
+
+/**
  * Scraper'ların yakaladığı görsel adaylarından ilk geçerli olanı seçer.
  * Lazy-load'lu sitelerde `src` bazen henüz gerçek görsele dönüşmemiş bir
  * placeholder (data: URI SVG iskeleti) taşıyor — bunu ürün görseli diye
@@ -44,12 +64,14 @@ const KNOWN_NO_IMAGE_URLS = new Set([
 export function pickImageUrl(...candidates: (string | undefined)[]): string | undefined {
   for (const c of candidates) {
     if (!c) continue;
-    if (c.startsWith('data:')) continue;
-    if (/placeholder/i.test(c)) continue;
-    if (KNOWN_NO_IMAGE_URLS.has(c)) continue;
-    return c;
+    if (!isSuspectImageUrl(c)) return c;
   }
   return undefined;
+}
+
+/** srcset içindeki ilk URL'i döndürür ("url1 2x, url2 3x" -> url1). */
+export function firstFromSrcSet(srcset: string | undefined): string | undefined {
+  return srcset?.split(',')[0]?.trim().split(/\s+/)[0] || undefined;
 }
 
 export interface Savings {

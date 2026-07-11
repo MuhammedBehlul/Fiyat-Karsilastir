@@ -8,6 +8,7 @@ import { cx } from './cx';
  */
 export interface CategoryChipProps {
   href?: string;
+  onClick?: () => void;
   active?: boolean;
   className?: string;
   children: ReactNode;
@@ -15,6 +16,7 @@ export interface CategoryChipProps {
 
 export default function CategoryChip({
   href,
+  onClick,
   active = false,
   className,
   children,
@@ -32,6 +34,13 @@ export default function CategoryChip({
       <Link href={href} className={classes} aria-current={active ? 'page' : undefined}>
         {children}
       </Link>
+    );
+  }
+  if (onClick) {
+    return (
+      <button onClick={onClick} type="button" className={classes}>
+        {children}
+      </button>
     );
   }
   return <span className={classes}>{children}</span>;

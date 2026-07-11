@@ -47,7 +47,7 @@ export default function RootLayout({
         className={`${inter.variable} ${spaceGrotesk.variable} ${plexMono.variable} bg-surface-alt font-sans text-text antialiased`}
       >
         <Navbar />
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 py-8">{children}</main>
         <footer className="mt-12 border-t border-border py-8 text-center text-xs text-muted">
           <p>
             Fiyatlar günde bir kez ilgili sitelerden otomatik derlenir; satın alma öncesi güncel

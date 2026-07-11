@@ -1,20 +1,23 @@
 import * as cheerio from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import type { CategorySlug } from '../../lib/types';
 import { parseTurkishPrice, pickImageUrl } from '../../lib/normalize';
-import { canonicalColor, type VariantAttrs } from '../../lib/variant';
+import { canonicalColor } from '../../lib/variant';
 import { BlockedError, fetchHtml } from '../http';
 import { fetchHtmlWithBrowser } from '../browser';
-import type { ParsedItem, SiteScraper } from '../engine';
+import type { DetailInfo, ParsedItem, SiteScraper } from '../engine';
 
 const BASE = 'https://www.n11.com';
 
 /**
  * N11 listeleme başlıkları renk içermiyor; detay sayfası ise yapılandırılmış
- * "attributeList":[{"name":"Renk","value":"Koyu Mavi"},...] JSON'u taşıyor.
- * Başlıkta renk bulunamayan yeni ürünler için persist bu fonksiyona başvurur
- * (koşu başına sınırlı sayıda, istekler arası nazik gecikmeyle).
+ * "catalogProductInfo":{"attributeList":[{"name":"Renk",...}],"imageUrl":"..."}
+ * JSON'u taşıyor. Başlıkta renk bulunamayan yeni ürünler için persist bu
+ * fonksiyona başvurur (koşu başına sınırlı sayıda, nazik gecikmeyle) — aynı
+ * yanıttan ürün görseli de bedavaya çıkar (listelemede lazy-load yüzünden
+ * görselsiz kalan N11 kayıtlarını doldurur).
  */
-async function fetchVariantDetails(url: string): Promise<Partial<VariantAttrs>> {
+async function fetchVariantDetails(url: string): Promise<DetailInfo> {
   let html: string;
   try {
     html = await fetchHtml(url);
@@ -34,7 +37,7 @@ async function fetchVariantDetails(url: string): Promise<Partial<VariantAttrs>> 
     return {};
   }
   const attr = (n: string) => list.find((a) => a.name?.toLocaleLowerCase('tr-TR') === n)?.value;
-  const out: Partial<VariantAttrs> = {};
+  const out: DetailInfo = {};
   const renk = attr('renk');
   if (renk) out.color = canonicalColor(renk) ?? undefined;
   const hafiza = attr('dahili hafıza') ?? attr('dahili hafiza');
@@ -43,7 +46,31 @@ async function fetchVariantDetails(url: string): Promise<Partial<VariantAttrs>> 
   const ramRaw = attr('ram') ?? attr('ram kapasitesi');
   const ram = ramRaw?.match(/(\d+)\s*gb/i);
   if (ram) out.ramGb = Number(ram[1]);
+  // attributeList'in hemen ardındaki imageUrl aynı catalogProductInfo bloğundandır.
+  const img = html.slice(m.index!, m.index! + m[0].length + 500).match(/"imageUrl":"([^"]+)"/);
+  out.imageUrl = pickImageUrl(img?.[1]);
   return out;
+}
+
+/**
+ * Karttaki tüm img'lerden ürün fotoğrafı adaylarını toplar: kampanya kareleri
+ * (square-size / alt="SQUARE") ve ikon img'leri atlanır; lazy-load gerçek URL'i
+ * data-src/data-original'da tuttuğu için onlar src'den önce denenir.
+ */
+function imageCandidates(
+  card: cheerio.Cheerio<AnyNode>,
+  $: cheerio.CheerioAPI,
+): (string | undefined)[] {
+  const lazy: (string | undefined)[] = [];
+  const direct: (string | undefined)[] = [];
+  card.find('img').each((_, el) => {
+    const img = $(el);
+    const cls = img.attr('class') ?? '';
+    if (/square-size|card-add-button|badge/.test(cls) || img.attr('alt') === 'SQUARE') return;
+    lazy.push(img.attr('data-original'), img.attr('data-src'));
+    direct.push(img.attr('src'));
+  });
+  return [...lazy, ...direct];
 }
 
 // Sayfalama: ?pg=N (robots.txt engellemiyor).
@@ -81,7 +108,10 @@ export const n11: SiteScraper = {
         price,
         currency: 'TRY',
         productUrl: href.startsWith('http') ? href.split('?')[0] : BASE + href.split('?')[0],
-        imageUrl: pickImageUrl(card.find('img.listing-items-image').first().attr('src')),
+        // Gerçek görsel URL'i çoğu kartta listing-items-image'ın KARDEŞİ olan
+        // bir img'in data-src'sinde (canlı DOM incelemesiyle doğrulandı);
+        // kampanya kareleri (.square-size, alt="SQUARE") ve buton ikonları elenir.
+        imageUrl: pickImageUrl(...imageCandidates(card, $)),
       });
     });
     return products;

@@ -184,6 +184,7 @@ export default function CategoryDropdown({ categories }: CategoryDropdownProps) 
                                   src={p.imageUrl ?? '/placeholder.svg'}
                                   alt=""
                                   loading="lazy"
+                                  referrerPolicy="no-referrer"
                                   className="h-full w-full object-contain"
                                 />
                               </div>

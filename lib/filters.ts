@@ -45,7 +45,7 @@ export function parseFilters(sp: SearchParamsRecord): CategoryFilters {
 
 export function parseSort(sp: SearchParamsRecord): CategorySort {
   const s = first(sp.sort);
-  return s === 'price-desc' || s === 'newest' ? s : 'price-asc';
+  return s === 'price-asc' || s === 'price-desc' || s === 'newest' ? s : 'popular';
 }
 
 export function parsePage(sp: SearchParamsRecord): number {

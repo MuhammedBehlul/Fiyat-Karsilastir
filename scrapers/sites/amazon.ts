@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { parseTurkishPrice, pickImageUrl } from '../../lib/normalize';
+import { firstFromSrcSet, parseTurkishPrice, pickImageUrl } from '../../lib/normalize';
 import type { ParsedItem, SiteScraper } from '../engine';
 
 const BASE = 'https://www.amazon.com.tr';
@@ -41,7 +41,10 @@ export const amazon: SiteScraper = {
         price,
         currency: 'TRY',
         productUrl: `${BASE}/dp/${asin}`,
-        imageUrl: pickImageUrl(card.find('img').first().attr('src')),
+        imageUrl: pickImageUrl(
+          card.find('img').first().attr('src'),
+          firstFromSrcSet(card.find('img').first().attr('srcset')),
+        ),
       });
     });
     return products;

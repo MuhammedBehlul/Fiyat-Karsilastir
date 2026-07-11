@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import type { CategorySlug } from '../../lib/types';
-import { parseTurkishPrice, pickImageUrl } from '../../lib/normalize';
+import { firstFromSrcSet, parseTurkishPrice, pickImageUrl } from '../../lib/normalize';
 import type { ParsedItem, SiteScraper } from '../engine';
 
 const BASE = 'https://www.trendyol.com';
@@ -46,7 +46,12 @@ export const trendyol: SiteScraper = {
         price,
         currency: 'TRY',
         productUrl,
-        imageUrl: pickImageUrl(card.find('img.image').first().attr('src')),
+        // Lazy-load: gerçek görsel çoğu kartta data-src/srcset'te; src placeholder olabilir.
+        imageUrl: pickImageUrl(
+          card.find('img.image').first().attr('data-src'),
+          firstFromSrcSet(card.find('img.image').first().attr('srcset')),
+          card.find('img.image').first().attr('src'),
+        ),
       });
     });
     return products;

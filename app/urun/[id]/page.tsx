@@ -69,6 +69,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <img
             src={product.imageUrl ?? '/placeholder.svg'}
             alt={product.name}
+            referrerPolicy="no-referrer"
             className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
           />
         </div>

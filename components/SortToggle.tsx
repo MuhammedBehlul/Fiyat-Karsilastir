@@ -5,26 +5,31 @@ import CategoryChip from './ui/CategoryChip';
 export default function SortToggle({
   basePath,
   query,
-  direction,
+  sort,
 }: {
   basePath: string;
   query?: string;
-  direction: 'asc' | 'desc';
+  sort?: string;
 }) {
-  const hrefFor = (sort: 'asc' | 'desc') => {
+  const hrefFor = (s?: 'asc' | 'desc') => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
-    params.set('sort', sort);
+    if (s) params.set('sort', s);
     return `${basePath}?${params.toString()}`;
   };
+
+  const currentSort = sort === 'asc' || sort === 'desc' ? sort : 'rel';
 
   return (
     <div className="flex items-center gap-2 text-body-sm">
       <span className="text-muted">Sırala:</span>
-      <CategoryChip href={hrefFor('asc')} active={direction === 'asc'}>
+      <CategoryChip href={hrefFor()} active={currentSort === 'rel'}>
+        En ilişkili
+      </CategoryChip>
+      <CategoryChip href={hrefFor('asc')} active={currentSort === 'asc'}>
         Ucuzdan pahalıya
       </CategoryChip>
-      <CategoryChip href={hrefFor('desc')} active={direction === 'desc'}>
+      <CategoryChip href={hrefFor('desc')} active={currentSort === 'desc'}>
         Pahalıdan ucuza
       </CategoryChip>
     </div>

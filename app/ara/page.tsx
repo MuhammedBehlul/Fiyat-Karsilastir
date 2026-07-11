@@ -23,13 +23,15 @@ export default async function SearchPage({
 }) {
   const sp = await searchParams;
   const { q = '', sort } = sp;
-  const direction = sort === 'desc' ? 'desc' : 'asc';
+  const sortStr = typeof sort === 'string' ? sort : Array.isArray(sort) ? sort[0] : undefined;
   const page = parsePage(sp);
 
   const found = q ? await searchProducts(q).catch(() => []) : [];
   // Sıralama tüm sonuç listesinde yapılır, sayfa sonra dilimlenir — böylece
   // "ucuzdan pahalıya" 2. sayfada da tutarlı kalır.
-  const results = sortByCheapestPrice(found, direction);
+  const results = sortStr === 'asc' || sortStr === 'desc'
+    ? sortByCheapestPrice(found, sortStr)
+    : found; // "En ilişkili" varsayılan arama sıralamasını koru
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const pageItems = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -52,7 +54,7 @@ export default async function SearchPage({
               <strong className="text-text font-semibold">&ldquo;{q}&rdquo;</strong> için {results.length} ürün listelendi.
             </p>
           </div>
-          {results.length > 1 && <SortToggle basePath="/ara" query={q} direction={direction} />}
+          {results.length > 1 && <SortToggle basePath="/ara" query={q} sort={sortStr} />}
         </div>
       )}
       {pageItems.length === 0 ? (

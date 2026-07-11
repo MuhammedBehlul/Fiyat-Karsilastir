@@ -121,7 +121,50 @@ const VARIANT_PRICE_CTE = Prisma.sql`
  * çağıran tarafta dilimlemeyle yapılır ki sıralama liste genelinde tutarlı kalsın.
  */
 export async function searchProducts(query: string, limit = 240): Promise<ProductWithPrices[]> {
-  const tokens = foldTurkish(query)
+  const foldedQuery = foldTurkish(query).trim();
+  
+  // Eğer arama sorgusu doğrudan bir kategori slug'ı ile eşleşiyorsa (veya kategoriyi çağrıştırıyorsa)
+  // o kategorideki tüm ürünleri çekip alaka düzeyine göre sıralayalım.
+  let matchedCategorySlug: string | null = null;
+  if (foldedQuery === 'telefon' || foldedQuery === 'cep telefonu' || foldedQuery === 'telefonlar' || foldedQuery === 'cep telefonlari') {
+    matchedCategorySlug = 'telefon';
+  } else if (
+    foldedQuery === 'laptop' ||
+    foldedQuery === 'bilgisayar' ||
+    foldedQuery === 'notebook' ||
+    foldedQuery === 'dizustu' ||
+    foldedQuery === 'laptoplar' ||
+    foldedQuery === 'bilgisayarlar' ||
+    foldedQuery === 'notebooklar' ||
+    foldedQuery === 'dizustu bilgisayar'
+  ) {
+    matchedCategorySlug = 'laptop';
+  } else if (foldedQuery === 'kulaklik' || foldedQuery === 'kulakliklar') {
+    matchedCategorySlug = 'kulaklik';
+  } else if (foldedQuery === 'ev aletleri' || foldedQuery === 'ev aleti') {
+    matchedCategorySlug = 'ev-aletleri';
+  }
+
+  if (matchedCategorySlug) {
+    const rows = await prisma.productVariant.findMany({
+      where: {
+        product: {
+          category: {
+            slug: matchedCategorySlug
+          }
+        }
+      },
+      include: variantInclude,
+      take: limit,
+    });
+    return rows
+      .map(toProductWithPrices)
+      .filter((p) => p.prices.length > 0)
+      .sort((a, b) => b.prices.length - a.prices.length);
+  }
+
+  // Standart arama mantığı
+  const tokens = foldedQuery
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 8);
@@ -195,7 +238,7 @@ export async function getProductsByCategory(
   slug: string,
   opts: { filters?: CategoryFilters; sort?: CategorySort; page?: number; pageSize?: number } = {},
 ): Promise<PagedResult<ProductWithPrices>> {
-  const { filters = {}, sort = 'price-asc', page = 1, pageSize = 24 } = opts;
+  const { filters = {}, sort = 'popular', page = 1, pageSize = 24 } = opts;
 
   const conditions: Prisma.Sql[] = [Prisma.sql`c.slug = ${slug}`];
   if (filters.brand?.length) conditions.push(Prisma.sql`p.brand IN (${Prisma.join(filters.brand)})`);
@@ -213,7 +256,9 @@ export async function getProductsByCategory(
       ? Prisma.sql`vp.min_price DESC NULLS LAST`
       : sort === 'price-asc'
         ? Prisma.sql`vp.min_price ASC`
-        : Prisma.sql`pv.created_at DESC`;
+        : sort === 'newest'
+          ? Prisma.sql`pv.created_at DESC`
+          : Prisma.sql`vp.site_count DESC, vp.min_price ASC`;
 
   const rows = await prisma.$queryRaw<{ variant_id: number; total_count: bigint }[]>`
     ${VARIANT_PRICE_CTE}
@@ -314,6 +359,7 @@ export interface PriceDrop {
   currentPrice: number;
   previousPrice: number;
   percent: number;
+  categorySlug?: string;
 }
 
 /**
@@ -355,7 +401,20 @@ export async function getTopPriceDrops(limit = 8, categorySlug?: string): Promis
 
   const variants = await prisma.productVariant.findMany({
     where: { id: { in: rows.map((r) => r.variant_id) } },
-    select: { id: true, displayName: true, imageUrl: true },
+    select: {
+      id: true,
+      displayName: true,
+      imageUrl: true,
+      product: {
+        select: {
+          category: {
+            select: {
+              slug: true,
+            },
+          },
+        },
+      },
+    },
   });
   const byId = new Map(variants.map((v) => [v.id, v]));
 
@@ -372,6 +431,7 @@ export async function getTopPriceDrops(limit = 8, categorySlug?: string): Promis
         currentPrice,
         previousPrice,
         percent: ((previousPrice - currentPrice) / previousPrice) * 100,
+        categorySlug: variant.product?.category?.slug,
       },
     ];
   });

@@ -7,6 +7,7 @@ import type { CategorySort } from '@/lib/types';
  * parametreleri korur, sayfayı 1'e döndürür.
  */
 const OPTIONS: { value: CategorySort; label: string }[] = [
+  { value: 'popular', label: 'Popüler' },
   { value: 'price-asc', label: 'Ucuzdan pahalıya' },
   { value: 'price-desc', label: 'Pahalıdan ucuza' },
   { value: 'newest', label: 'En yeni' },
@@ -30,7 +31,7 @@ export default function SortSelect({
           href={
             basePath +
             buildQuery(searchParams, (p) => {
-              if (opt.value === 'price-asc') p.delete('sort'); // varsayılan: URL temiz kalsın
+              if (opt.value === 'popular') p.delete('sort'); // varsayılan: URL temiz kalsın
               else p.set('sort', opt.value);
             })
           }

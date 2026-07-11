@@ -27,6 +27,9 @@ export interface CategoryListing {
 /** parse() kategori bilmez; engine hangi listelemeden geldiyse onu damgalar. */
 export type ParsedItem = Omit<ScrapedProduct, 'categorySlug'>;
 
+/** Detay sayfası zenginleştirmesinin getirebildikleri: varyant nitelikleri + ürün görseli. */
+export type DetailInfo = Partial<VariantAttrs> & { imageUrl?: string };
+
 export interface SiteScraper {
   site: SiteName;
   listings: CategoryListing[];
@@ -35,7 +38,7 @@ export interface SiteScraper {
   /** Playwright'ta ürünlerin yüklendiğini gösteren selector. */
   waitForSelector?: string;
   /** Başlıkta varyant bilgisi eksikse detay sayfasından yapılandırılmış nitelik getirir. */
-  enrichDetail?(url: string): Promise<Partial<VariantAttrs>>;
+  enrichDetail?(url: string): Promise<DetailInfo>;
   parse(html: string): ParsedItem[];
 }
 

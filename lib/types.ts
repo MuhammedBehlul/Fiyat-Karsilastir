@@ -50,7 +50,7 @@ export interface CategoryFilters {
   comparableOnly?: boolean;
 }
 
-export type CategorySort = 'price-asc' | 'price-desc' | 'newest';
+export type CategorySort = 'popular' | 'price-asc' | 'price-desc' | 'newest';
 
 export interface PagedResult<T> {
   items: T[];

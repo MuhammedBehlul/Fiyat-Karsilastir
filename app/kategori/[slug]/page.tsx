@@ -65,6 +65,7 @@ export default async function CategoryPage({
   const sort = parseSort(sp);
   const page = parsePage(sp);
   const filtered = hasActiveFilters(filters);
+  const showWidgets = !filtered && sort === 'popular' && page === 1;
 
   const [facets, { items: products, total }] = await Promise.all([
     getCategoryFacets(slug).catch(() => EMPTY_FACETS),
@@ -97,43 +98,54 @@ export default async function CategoryPage({
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <CategoryFilters facets={facets} />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
-          {/* Filtresiz ilk görünümde ve varsayılan sıralamada kategori vitrini; filtre uygulanınca veya sıralama değişince sonuç listesine yer aç. */}
-          {!filtered && sort === 'price-asc' && page === 1 && <CategoryWidgets categorySlug={slug} />}
+        <div className="flex min-w-0 flex-1 flex-col gap-6 xl:flex-row xl:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+              <p className="text-body-sm text-muted">
+                <span className="font-mono font-semibold tabular-nums text-text">{total}</span> sonuç
+              </p>
+              <SortSelect basePath={basePath} searchParams={sp} sort={sort} />
+            </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-body-sm text-muted">
-              <span className="font-mono font-semibold tabular-nums text-text">{total}</span> sonuç
-            </p>
-            <SortSelect basePath={basePath} searchParams={sp} sort={sort} />
+            <ActiveFilterChips basePath={basePath} searchParams={sp} />
+
+            {products.length === 0 ? (
+              <Card className="p-8 text-center text-body-sm text-muted">
+                {facets.totalCount === 0 ? (
+                  'Bu kategoride henüz ürün yok — günlük tarama sonrası tekrar deneyin.'
+                ) : filtered ? (
+                  <>
+                    Seçtiğiniz filtrelere uygun ürün bulunamadı.{' '}
+                    <Link href={basePath} className="font-medium text-primary underline-offset-2 hover:underline">
+                      Filtreleri temizle
+                    </Link>
+                  </>
+                ) : (
+                  'Bu sayfada gösterilecek ürün yok.'
+                )}
+              </Card>
+            ) : (
+              <div
+                className={
+                  showWidgets
+                    ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'
+                    : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                }
+              >
+                {products.map((p) => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            )}
+
+            <Pagination basePath={basePath} searchParams={sp} page={page} totalPages={totalPages} />
           </div>
 
-          <ActiveFilterChips basePath={basePath} searchParams={sp} />
-
-          {products.length === 0 ? (
-            <Card className="p-8 text-center text-body-sm text-muted">
-              {facets.totalCount === 0 ? (
-                'Bu kategoride henüz ürün yok — günlük tarama sonrası tekrar deneyin.'
-              ) : filtered ? (
-                <>
-                  Seçtiğiniz filtrelere uygun ürün bulunamadı.{' '}
-                  <Link href={basePath} className="font-medium text-primary underline-offset-2 hover:underline">
-                    Filtreleri temizle
-                  </Link>
-                </>
-              ) : (
-                'Bu sayfada gösterilecek ürün yok.'
-              )}
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+          {showWidgets && (
+            <aside className="w-full shrink-0 xl:w-[320px] xl:sticky xl:top-[88px] xl:self-start">
+              <CategoryWidgets categorySlug={slug} />
+            </aside>
           )}
-
-          <Pagination basePath={basePath} searchParams={sp} page={page} totalPages={totalPages} />
         </div>
       </div>
     </div>

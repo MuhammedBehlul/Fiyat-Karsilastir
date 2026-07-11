@@ -67,7 +67,7 @@ export default async function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/80 shadow-sm backdrop-blur-md transition-shadow duration-200">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3.5 lg:flex-nowrap">
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-6 gap-y-3 px-4 sm:px-6 lg:px-8 py-3.5 lg:flex-nowrap w-full">
         <Link
           href="/"
           className="flex items-center gap-2.5 shrink-0 font-heading text-lg font-bold tracking-tight text-text hover:opacity-90 transition-opacity"

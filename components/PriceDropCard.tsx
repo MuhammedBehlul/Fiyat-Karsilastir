@@ -17,6 +17,7 @@ export default function PriceDropCard({ drop }: { drop: PriceDrop }) {
             src={drop.imageUrl ?? '/placeholder.svg'}
             alt={drop.name}
             loading="lazy"
+            referrerPolicy="no-referrer"
             className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
           />
         </div>
