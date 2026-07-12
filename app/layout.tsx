@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google';
 import Link from 'next/link';
 import Navbar from '@/components/ui/Navbar';
+import CompareTray from '@/components/CompareTray';
 import { siteUrl } from '@/lib/seo';
 import './globals.css';
 
@@ -65,6 +66,7 @@ export default function RootLayout({
       >
         <Navbar />
         <main className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+        <CompareTray />
         <footer className="mt-12 border-t border-border py-8 text-center text-xs text-muted">
           <p>
             Fiyatlar günde bir kez ilgili sitelerden otomatik derlenir; satın alma öncesi güncel

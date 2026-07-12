@@ -14,6 +14,7 @@ import type {
   PagedResult,
   PriceTrend,
   ProductWithPrices,
+  SearchSuggestion,
   SiteName,
 } from './types';
 
@@ -210,6 +211,88 @@ export async function getCheapestPrices(
     WHERE variant_id IN (${Prisma.join(variantIds)})
   `;
   return new Map(rows.map((r) => [r.variant_id, Number(r.min_price)]));
+}
+
+/**
+ * Arama otomatik tamamlama: sorgu kelimelerinin tümünü içeren varyantlar,
+ * en ucuz fiyat + kaç mağazada bulunduğuyla. Karşılaştırılabilir (çok mağazalı)
+ * ve fiyatı olanlar öne alınır; hafif alanlar döner (dropdown için).
+ */
+export async function getSearchSuggestions(
+  query: string,
+  limit = 8,
+): Promise<SearchSuggestion[]> {
+  const tokens = foldTurkish(query).trim().split(/\s+/).filter(Boolean).slice(0, 6);
+  if (tokens.length === 0) return [];
+  const rows = await prisma.productVariant.findMany({
+    where: { AND: tokens.map((t) => ({ searchKey: { contains: t } })) },
+    select: {
+      id: true,
+      displayName: true,
+      imageUrl: true,
+      product: { select: { imageUrl: true } },
+      priceEntries: {
+        select: { siteName: true, price: true, scrapedAt: true },
+        orderBy: { scrapedAt: 'desc' },
+        take: 15,
+      },
+    },
+    take: 40,
+  });
+
+  const suggestions = rows.map((r) => {
+    // Her site için en güncel fiyat, sonra en ucuzu (toProductWithPrices ile aynı mantık).
+    const latestBySite = new Map<string, { price: number; scrapedAt: Date }>();
+    for (const e of r.priceEntries) {
+      const cur = latestBySite.get(e.siteName);
+      if (!cur || e.scrapedAt > cur.scrapedAt) latestBySite.set(e.siteName, { price: Number(e.price), scrapedAt: e.scrapedAt });
+    }
+    const prices = [...latestBySite.values()].map((x) => x.price);
+    return {
+      id: r.id,
+      name: r.displayName,
+      imageUrl: r.imageUrl ?? r.product.imageUrl,
+      price: prices.length ? Math.min(...prices) : null,
+      siteCount: prices.length,
+    };
+  });
+
+  // Önce çok mağazalı, sonra fiyatı olan; en ucuzdan başlayarak.
+  suggestions.sort(
+    (a, b) => b.siteCount - a.siteCount || (a.price ?? Infinity) - (b.price ?? Infinity),
+  );
+  return suggestions.slice(0, limit);
+}
+
+/**
+ * Benzer ürünler (ürün sayfası): aynı kategoride, aynı ürünün diğer varyantları
+ * HARİÇ. Aynı marka + çok mağazalı olanlar öne alınır.
+ */
+export async function getSimilarProducts(
+  variantId: number,
+  limit = 8,
+): Promise<ProductWithPrices[]> {
+  const source = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { productId: true, product: { select: { brand: true, categoryId: true } } },
+  });
+  if (!source?.product.categoryId) return [];
+
+  const brand = source.product.brand;
+  const rows = await prisma.$queryRaw<{ variant_id: number }[]>`
+    ${VARIANT_PRICE_CTE}
+    SELECT pv.id AS variant_id
+    FROM product_variants pv
+    JOIN products p ON p.id = pv.product_id
+    JOIN variant_price vp ON vp.variant_id = pv.id
+    WHERE p.category_id = ${source.product.categoryId}
+      AND p.id <> ${source.productId}
+    ORDER BY (${brand}::text IS NOT NULL AND p.brand = ${brand}) DESC,
+             vp.site_count DESC,
+             pv.created_at DESC
+    LIMIT ${limit}
+  `;
+  return getProductsByIds(rows.map((r) => r.variant_id));
 }
 
 /**

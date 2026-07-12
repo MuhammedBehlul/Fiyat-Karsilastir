@@ -7,6 +7,7 @@ import Card from './ui/Card';
 import PriceTag from './ui/PriceTag';
 import { TrendDownIcon, TrendUpIcon } from './ui/icons';
 import { SITE_COLOR_VAR } from './SiteBadge';
+import CompareToggle from './CompareToggle';
 import FavoriteButton from './FavoriteButton';
 import { cx } from './ui/cx';
 
@@ -58,16 +59,23 @@ export default function ProductCard({
   product,
   favorite = false,
   showFavorite = true,
+  showCompare = true,
 }: {
   product: ProductWithPrices;
   favorite?: boolean;
   showFavorite?: boolean;
+  showCompare?: boolean;
 }) {
   const cheapest = product.prices[0];
   const siteCount = product.prices.length;
   const specs = specLine(product);
   return (
     <Card interactive className="group relative flex flex-col p-2.5">
+      {showCompare && (
+        <div className="absolute left-3.5 top-3.5 z-10">
+          <CompareToggle variantId={product.id} />
+        </div>
+      )}
       {showFavorite && (
         <div className="absolute right-3.5 top-3.5 z-10">
           <FavoriteButton variantId={product.id} initialActive={favorite} />

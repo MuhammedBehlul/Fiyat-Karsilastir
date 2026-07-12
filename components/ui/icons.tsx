@@ -117,3 +117,13 @@ export function BellIcon(props: IconProps) {
   );
 }
 
+/** Karşılaştır — yan yana iki sütun. */
+export function CompareIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="4" y="5" width="6" height="14" rx="1" />
+      <rect x="14" y="5" width="6" height="14" rx="1" />
+    </svg>
+  );
+}
+

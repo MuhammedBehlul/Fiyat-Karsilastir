@@ -1,15 +1,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import AlertForm from '@/components/AlertForm';
+import CompareToggle from '@/components/CompareToggle';
 import FavoriteButton from '@/components/FavoriteButton';
 import JsonLd from '@/components/JsonLd';
 import PriceList from '@/components/PriceList';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
+import ProductCard from '@/components/ProductCard';
 import SiteBadge from '@/components/SiteBadge';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getPriceHistory, getProductWithPrices } from '@/lib/cached';
-import { getAlertForVariant, isFavorite } from '@/lib/accounts';
+import { getAlertForVariant, getFavoriteVariantIds } from '@/lib/accounts';
 import { getCurrentUser } from '@/lib/currentUser';
+import { getSimilarProducts } from '@/lib/queries';
 import { buildChartRows, findLowestEver } from '@/lib/history';
 import { calcSavings, formatPrice } from '@/lib/normalize';
 import { buildBreadcrumbJsonLd, buildProductJsonLd } from '@/lib/seo';
@@ -59,14 +62,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const priciest = product.prices[product.prices.length - 1];
   const savings = cheapest && priciest ? calcSavings(cheapest.price, priciest.price) : null;
 
-  // Kullanıcıya özel durum (force-dynamic sayfa): favori + fiyat alarmı.
+  // Benzer ürünler + kullanıcıya özel durum (force-dynamic sayfa): favori + alarm.
   const user = await getCurrentUser().catch(() => null);
-  const [favorited, existingAlert] = user
-    ? await Promise.all([
-        isFavorite(user.id, productId).catch(() => false),
-        getAlertForVariant(user.id, productId).catch(() => null),
-      ])
-    : [false, null];
+  const [similar, favIds, existingAlert] = await Promise.all([
+    getSimilarProducts(productId, 8).catch(() => []),
+    user ? getFavoriteVariantIds(user.id).catch(() => []) : Promise.resolve([]),
+    user ? getAlertForVariant(user.id, productId).catch(() => null) : Promise.resolve(null),
+  ]);
+  const favSet = new Set(favIds);
+  const favorited = favSet.has(productId);
 
   // Gezinti izi: kategori adı DB'siz, statik CATEGORIES sabitinden çözülür.
   const categoryLabel =
@@ -87,6 +91,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <Breadcrumb items={breadcrumbItems} />
       <section className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 md:gap-8 rounded-3xl border border-border bg-surface p-6 shadow-premium">
         <div className="flex items-center justify-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100 h-56 md:h-full relative overflow-hidden group">
+          <div className="absolute left-3 top-3 z-10">
+            <CompareToggle variantId={product.id} />
+          </div>
           <div className="absolute right-3 top-3 z-10">
             <FavoriteButton variantId={product.id} initialActive={favorited} />
           </div>
@@ -204,6 +211,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <PriceHistoryChart rows={chartRows} />
         </div>
       </section>
+
+      {similar.length > 0 && (
+        <section>
+          <h2 className="mb-4 font-heading text-lg font-bold text-text">Benzer ürünler</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {similar.map((p) => (
+              <ProductCard key={p.id} product={p} favorite={favSet.has(p.id)} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -3,8 +3,8 @@ import { logout } from '@/app/hesap/actions';
 import { getCategoryFacets, getFeaturedProducts } from '@/lib/cached';
 import { getCurrentUser } from '@/lib/currentUser';
 import { CATEGORIES, type CategorySlug } from '@/lib/types';
+import SearchAutocomplete from '../SearchAutocomplete';
 import AccountMenu from './AccountMenu';
-import { SearchInput } from './Input';
 import { CloseIcon, MenuIcon } from './icons';
 import CategoryDropdown, { type CategoryMenuData } from './CategoryDropdown';
 
@@ -111,7 +111,7 @@ export default async function Navbar() {
         </nav>
 
         <div className="order-3 w-full min-w-0 lg:order-none lg:ml-auto lg:w-auto lg:max-w-xs lg:flex-1">
-          <SearchInput placeholder="Ürün ara — örn. iPhone 15" aria-label="Ürün ara" />
+          <SearchAutocomplete placeholder="Ürün ara — örn. iPhone 15" />
         </div>
 
         {/* Hesap: masaüstünde açılır menü, mobilde aşağıdaki menüye taşınır */}

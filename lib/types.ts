@@ -136,3 +136,12 @@ export interface ProductWithPrices {
   /** Yeterli geçmiş yoksa (tek tarama günü) null. */
   trend: PriceTrend | null;
 }
+
+/** Arama otomatik tamamlama önerisi (hafif — tam ProductWithPrices değil). */
+export interface SearchSuggestion {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  price: number | null;
+  siteCount: number;
+}
