@@ -137,7 +137,17 @@ async function main() {
     }
   }
 
-  if (persist) await pingRevalidate();
+  if (persist) {
+    await pingRevalidate();
+    // Fiyatlar güncellendi — hedefine ulaşan fiyat alarmları için e-posta gönder.
+    try {
+      const { checkAndSendPriceAlerts } = await import('../lib/alerts');
+      const { checked, sent } = await checkAndSendPriceAlerts();
+      if (checked > 0) console.log(`\n✓ Fiyat alarmları: ${checked} kontrol edildi, ${sent} bildirim gönderildi`);
+    } catch (err) {
+      console.warn(`\n⚠ Fiyat alarmı kontrolü başarısız: ${(err as Error).message}`);
+    }
+  }
   await closeBrowser();
   // Tek site bile başarısızsa exit 1: GitHub Actions'ta görünür olsun (diğer siteler yine de işlendi).
   process.exit(hadError ? 1 : 0);

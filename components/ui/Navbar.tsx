@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { logout } from '@/app/hesap/actions';
 import { getCategoryFacets, getFeaturedProducts } from '@/lib/cached';
+import { getCurrentUser } from '@/lib/currentUser';
 import { CATEGORIES, type CategorySlug } from '@/lib/types';
+import AccountMenu from './AccountMenu';
 import { SearchInput } from './Input';
 import { CloseIcon, MenuIcon } from './icons';
 import CategoryDropdown, { type CategoryMenuData } from './CategoryDropdown';
@@ -55,7 +58,10 @@ async function loadMegaMenu(): Promise<CategoryMenuData[]> {
 }
 
 export default async function Navbar() {
-  const megaMenu = await loadMegaMenu().catch(() => []);
+  const [megaMenu, user] = await Promise.all([
+    loadMegaMenu().catch(() => []),
+    getCurrentUser().catch(() => null),
+  ]);
   const categoriesData = megaMenu.length > 0 
     ? megaMenu 
     : Object.entries(CATEGORIES).map(([slug, name]) => ({
@@ -108,13 +114,10 @@ export default async function Navbar() {
           <SearchInput placeholder="Ürün ara — örn. iPhone 15" aria-label="Ürün ara" />
         </div>
 
-        {/*
-          Gelecekteki hesap/favoriler/fiyat alarmı ikonları için ayrılmış alan.
-          Bugün hiçbir kullanıcı hesabı/bildirim özelliği yok; boş, işlevsiz
-          ikon eklenmedi. Bir özellik geldiğinde: components/ui/icons.tsx'e
-          named export ekle, burada <Button variant="ghost" size="sm"> ile
-          SearchInput'tan SONRA, mobil hamburger'dan ÖNCE yerleştir.
-        */}
+        {/* Hesap: masaüstünde açılır menü, mobilde aşağıdaki menüye taşınır */}
+        <div className="hidden shrink-0 lg:block">
+          <AccountMenu user={user} />
+        </div>
 
         {/* Dar ekran menüsü: native disclosure, client JS yok */}
         <details className="group relative order-2 ml-auto lg:hidden">
@@ -126,6 +129,22 @@ export default async function Navbar() {
             <CloseIcon className="hidden h-5 w-5 group-open:block" />
           </summary>
           <nav className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-border bg-surface py-2 shadow-lg max-h-[75vh] overflow-y-auto scrollbar-thin">
+            {user ? (
+              <>
+                <p className="truncate px-4 pb-1.5 pt-1 text-caption text-muted">{user.email}</p>
+                <Link href="/favorilerim" className="block px-4 py-2.5 text-body-sm font-medium text-text hover:bg-primary-soft hover:text-primary">
+                  Favorilerim
+                </Link>
+                <Link href="/alarmlarim" className="block px-4 py-2.5 text-body-sm font-medium text-text hover:bg-primary-soft hover:text-primary">
+                  Fiyat alarmlarım
+                </Link>
+              </>
+            ) : (
+              <Link href="/giris" className="block px-4 py-2.5 text-body-sm font-semibold text-primary hover:bg-primary-soft">
+                Giriş yap / Kayıt ol
+              </Link>
+            )}
+            <span aria-hidden className="mx-4 my-1 block h-px bg-border" />
             {MOBILE_LINKS.map((l) => (
               <Link
                 key={l.href}
@@ -135,6 +154,16 @@ export default async function Navbar() {
                 {l.label}
               </Link>
             ))}
+            {user && (
+              <>
+                <span aria-hidden className="mx-4 my-1 block h-px bg-border" />
+                <form action={logout}>
+                  <button type="submit" className="block w-full px-4 py-2.5 text-left text-body-sm font-medium text-muted hover:bg-surface-alt hover:text-danger">
+                    Çıkış yap
+                  </button>
+                </form>
+              </>
+            )}
           </nav>
         </details>
       </div>

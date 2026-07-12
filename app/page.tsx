@@ -3,16 +3,20 @@ import CategoryTabs from '@/components/CategoryTabs';
 import PriceDropSection from '@/components/PriceDropSection';
 import Card from '@/components/ui/Card';
 import { getCatalogStats, getCategories, getFeaturedProducts } from '@/lib/cached';
+import { getFavoriteVariantIds } from '@/lib/accounts';
+import { getCurrentUser } from '@/lib/currentUser';
 import { SITES, CATEGORY_GROUPS } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [stats, categories, featured] = await Promise.all([
+  const [stats, categories, featured, user] = await Promise.all([
     getCatalogStats().catch(() => ({ productCount: 0 })),
     getCategories().catch(() => []),
     getFeaturedProducts(12).catch(() => []),
+    getCurrentUser().catch(() => null),
   ]);
+  const favSet = user ? new Set(await getFavoriteVariantIds(user.id).catch(() => [])) : null;
 
   // Kategori gruplama mantığı (tablar için)
   const groupedCategories = Object.entries(CATEGORY_GROUPS).map(([groupSlug, groupInfo]) => {
@@ -146,7 +150,7 @@ export default async function HomePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {featured.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard key={p.id} product={p} favorite={favSet?.has(p.id) ?? false} />
             ))}
           </div>
         )}

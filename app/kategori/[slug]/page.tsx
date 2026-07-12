@@ -11,6 +11,8 @@ import CategoryWidgets from '@/components/CategoryWidgets';
 import ProductCard from '@/components/ProductCard';
 import SortSelect from '@/components/SortSelect';
 import { getCategories, getCategoryFacets } from '@/lib/cached';
+import { getFavoriteVariantIds } from '@/lib/accounts';
+import { getCurrentUser } from '@/lib/currentUser';
 import { getProductsByCategory } from '@/lib/queries';
 import { hasActiveFilters, parseFilters, parsePage, parseSort, type SearchParamsRecord } from '@/lib/filters';
 import { buildBreadcrumbJsonLd } from '@/lib/seo';
@@ -80,6 +82,9 @@ export default async function CategoryPage({
   const basePath = `/kategori/${slug}`;
   const breadcrumbItems = [{ label: 'Ana Sayfa', href: '/' }, { label: category.name }];
 
+  const user = await getCurrentUser().catch(() => null);
+  const favSet = user ? new Set(await getFavoriteVariantIds(user.id).catch(() => [])) : null;
+
   return (
     <div className="flex flex-col gap-6">
       <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
@@ -137,7 +142,7 @@ export default async function CategoryPage({
                 }
               >
                 {products.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard key={p.id} product={p} favorite={favSet?.has(p.id) ?? false} />
                 ))}
               </div>
             )}

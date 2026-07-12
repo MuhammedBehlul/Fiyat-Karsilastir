@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import AlertForm from '@/components/AlertForm';
+import FavoriteButton from '@/components/FavoriteButton';
 import JsonLd from '@/components/JsonLd';
 import PriceList from '@/components/PriceList';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import SiteBadge from '@/components/SiteBadge';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getPriceHistory, getProductWithPrices } from '@/lib/cached';
+import { getAlertForVariant, isFavorite } from '@/lib/accounts';
+import { getCurrentUser } from '@/lib/currentUser';
 import { buildChartRows, findLowestEver } from '@/lib/history';
 import { calcSavings, formatPrice } from '@/lib/normalize';
 import { buildBreadcrumbJsonLd, buildProductJsonLd } from '@/lib/seo';
@@ -55,6 +59,15 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const priciest = product.prices[product.prices.length - 1];
   const savings = cheapest && priciest ? calcSavings(cheapest.price, priciest.price) : null;
 
+  // Kullanıcıya özel durum (force-dynamic sayfa): favori + fiyat alarmı.
+  const user = await getCurrentUser().catch(() => null);
+  const [favorited, existingAlert] = user
+    ? await Promise.all([
+        isFavorite(user.id, productId).catch(() => false),
+        getAlertForVariant(user.id, productId).catch(() => null),
+      ])
+    : [false, null];
+
   // Gezinti izi: kategori adı DB'siz, statik CATEGORIES sabitinden çözülür.
   const categoryLabel =
     product.categorySlug && product.categorySlug in CATEGORIES
@@ -74,6 +87,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       <Breadcrumb items={breadcrumbItems} />
       <section className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 md:gap-8 rounded-3xl border border-border bg-surface p-6 shadow-premium">
         <div className="flex items-center justify-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100 h-56 md:h-full relative overflow-hidden group">
+          <div className="absolute right-3 top-3 z-10">
+            <FavoriteButton variantId={product.id} initialActive={favorited} />
+          </div>
           {/* eslint-disable-next-line @next/next/no-img-element -- harici CDN görselleri */}
           <img
             src={product.imageUrl ?? '/placeholder.svg'}
@@ -117,6 +133,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </section>
+
+      <AlertForm
+        variantId={product.id}
+        currentPrice={cheapest?.price ?? null}
+        initialTarget={existingAlert?.targetPrice ?? null}
+        loggedIn={user != null}
+      />
 
       <section>
         <h2 className="mb-4 font-heading text-lg font-bold text-text">Tüm Mağaza Fiyatları</h2>

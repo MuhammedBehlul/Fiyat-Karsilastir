@@ -185,6 +185,33 @@ export async function getProductWithPrices(id: number): Promise<ProductWithPrice
   return row ? toProductWithPrices(row) : null;
 }
 
+/** Verilen varyant id'lerini ProductWithPrices olarak, GİRDİ SIRASINI koruyarak döner (favoriler/alarmlar için). */
+export async function getProductsByIds(ids: number[]): Promise<ProductWithPrices[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.productVariant.findMany({
+    where: { id: { in: ids } },
+    include: variantInclude,
+  });
+  const byId = new Map(rows.map((r) => [r.id, toProductWithPrices(r)]));
+  return ids.flatMap((id) => {
+    const p = byId.get(id);
+    return p ? [p] : [];
+  });
+}
+
+/** Verilen varyantların güncel en ucuz fiyatı (fiyat alarmı kontrolü için). */
+export async function getCheapestPrices(
+  variantIds: number[],
+): Promise<Map<number, number>> {
+  if (variantIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<{ variant_id: number; min_price: unknown }[]>`
+    ${VARIANT_PRICE_CTE}
+    SELECT variant_id, min_price FROM variant_price
+    WHERE variant_id IN (${Prisma.join(variantIds)})
+  `;
+  return new Map(rows.map((r) => [r.variant_id, Number(r.min_price)]));
+}
+
 /**
  * Öne çıkanlar: birden çok sitede fiyatı bulunan (karşılaştırılabilir) varyantlar.
  * Aday seçimi SQL'de yapılır — "en yeni N ürünü çek, JS'te filtrele" yaklaşımı

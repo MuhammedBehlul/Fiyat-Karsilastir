@@ -7,6 +7,7 @@ import Card from './ui/Card';
 import PriceTag from './ui/PriceTag';
 import { TrendDownIcon, TrendUpIcon } from './ui/icons';
 import { SITE_COLOR_VAR } from './SiteBadge';
+import FavoriteButton from './FavoriteButton';
 import { cx } from './ui/cx';
 
 const COMPACT_SITE_LABELS: Record<SiteName, string> = {
@@ -51,12 +52,27 @@ function TrendIndicator({ trend }: { trend: ProductWithPrices['trend'] }) {
 }
 
 // prices ucuzdan pahalıya sıralı gelir (lib/queries garanti eder).
-export default function ProductCard({ product }: { product: ProductWithPrices }) {
+// favorite/showFavorite: yalnızca kullanıcı bağlamı olan (force-dynamic) liste
+// sayfalarından geçilir; cache'li önizleme widget'larında showFavorite=false.
+export default function ProductCard({
+  product,
+  favorite = false,
+  showFavorite = true,
+}: {
+  product: ProductWithPrices;
+  favorite?: boolean;
+  showFavorite?: boolean;
+}) {
   const cheapest = product.prices[0];
   const siteCount = product.prices.length;
   const specs = specLine(product);
   return (
-    <Card interactive className="group flex flex-col p-2.5">
+    <Card interactive className="group relative flex flex-col p-2.5">
+      {showFavorite && (
+        <div className="absolute right-3.5 top-3.5 z-10">
+          <FavoriteButton variantId={product.id} initialActive={favorite} />
+        </div>
+      )}
       <Link href={`/urun/${product.id}`} className="flex flex-1 flex-col">
         <div className="flex h-44 items-center justify-center p-6 pb-4 bg-slate-50/50 rounded-2xl overflow-hidden relative">
           {/* eslint-disable-next-line @next/next/no-img-element -- görseller 5 farklı harici CDN'den geliyor */}

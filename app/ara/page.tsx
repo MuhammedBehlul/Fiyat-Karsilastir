@@ -4,6 +4,8 @@ import Card from '@/components/ui/Card';
 import Pagination from '@/components/ui/Pagination';
 import { SearchInput } from '@/components/ui/Input';
 import { searchProducts } from '@/lib/cached';
+import { getFavoriteVariantIds } from '@/lib/accounts';
+import { getCurrentUser } from '@/lib/currentUser';
 import { parsePage } from '@/lib/filters';
 import { sortByCheapestPrice } from '@/lib/normalize';
 
@@ -36,6 +38,9 @@ export default async function SearchPage({
   const totalPages = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const pageItems = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const user = await getCurrentUser().catch(() => null);
+  const favSet = user ? new Set(await getFavoriteVariantIds(user.id).catch(() => [])) : null;
+
   return (
     <div className="flex flex-col gap-8">
       <div className="rounded-3xl bg-slate-50 border border-border p-6 shadow-sm">
@@ -67,7 +72,7 @@ export default async function SearchPage({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pageItems.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} favorite={favSet?.has(p.id) ?? false} />
           ))}
         </div>
       )}

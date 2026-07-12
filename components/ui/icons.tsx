@@ -90,3 +90,30 @@ export function GridIcon(props: IconProps) {
   );
 }
 
+export function UserIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" />
+    </svg>
+  );
+}
+
+/** Kalp — favori/takip için. filled: dolu (favorilenmiş) durum. */
+export function HeartIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <svg {...base(props)} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M12 20s-7-4.5-9.2-9C1.4 8.3 2.6 5 5.8 5 7.9 5 9.2 6.3 12 9c2.8-2.7 4.1-4 6.2-4 3.2 0 4.4 3.3 3 6-2.2 4.5-9.2 9-9.2 9Z" />
+    </svg>
+  );
+}
+
+export function BellIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+  );
+}
+
