@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import JsonLd from '@/components/JsonLd';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import ActiveFilterChips from '@/components/ui/ActiveFilterChips';
 import Pagination from '@/components/ui/Pagination';
@@ -12,6 +13,7 @@ import SortSelect from '@/components/SortSelect';
 import { getCategories, getCategoryFacets } from '@/lib/cached';
 import { getProductsByCategory } from '@/lib/queries';
 import { hasActiveFilters, parseFilters, parsePage, parseSort, type SearchParamsRecord } from '@/lib/filters';
+import { buildBreadcrumbJsonLd } from '@/lib/seo';
 import type { CategoryFacets } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -76,10 +78,12 @@ export default async function CategoryPage({
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const basePath = `/kategori/${slug}`;
+  const breadcrumbItems = [{ label: 'Ana Sayfa', href: '/' }, { label: category.name }];
 
   return (
     <div className="flex flex-col gap-6">
-      <Breadcrumb items={[{ label: 'Ana Sayfa', href: '/' }, { label: category.name }]} />
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
+      <Breadcrumb items={breadcrumbItems} />
 
       <header className="border-b border-border/60 pb-5">
         <span className="text-caption font-semibold uppercase tracking-wider text-muted">Kategori</span>

@@ -13,7 +13,8 @@ const PAGE_SIZE = 24;
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
-  return { title: q ? `"${q}" için sonuçlar` : 'Arama' };
+  // Arama sonucu sayfaları sonsuz sorgu permütasyonu üretir (ince/yinelenen içerik) — indekslenmesin.
+  return { title: q ? `"${q}" için sonuçlar` : 'Arama', robots: { index: false, follow: true } };
 }
 
 export default async function SearchPage({

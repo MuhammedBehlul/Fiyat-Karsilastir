@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import JsonLd from '@/components/JsonLd';
 import PriceList from '@/components/PriceList';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import SiteBadge from '@/components/SiteBadge';
@@ -7,6 +8,7 @@ import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getPriceHistory, getProductWithPrices } from '@/lib/cached';
 import { buildChartRows, findLowestEver } from '@/lib/history';
 import { calcSavings, formatPrice } from '@/lib/normalize';
+import { buildBreadcrumbJsonLd, buildProductJsonLd } from '@/lib/seo';
 import { CATEGORIES, SITE_LABELS, type CategorySlug } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -22,11 +24,18 @@ export async function generateMetadata({
   const product = await getProductWithPrices(Number(id)).catch(() => null);
   if (!product) return {};
   const cheapest = product.prices[0];
+  const description = cheapest
+    ? `${product.name} en ucuz ${formatPrice(cheapest.price, cheapest.currency)} fiyatla ${SITE_LABELS[cheapest.siteName]}'de. ${product.prices.length} mağazanın fiyatını karşılaştırın.`
+    : `${product.name} fiyatlarını karşılaştırın.`;
   return {
     title: product.name,
-    description: cheapest
-      ? `${product.name} en ucuz ${formatPrice(cheapest.price, cheapest.currency)} fiyatla ${SITE_LABELS[cheapest.siteName]}'de. ${product.prices.length} mağazanın fiyatını karşılaştırın.`
-      : `${product.name} fiyatlarını karşılaştırın.`,
+    description,
+    alternates: { canonical: `/urun/${id}` },
+    openGraph: {
+      title: product.name,
+      description,
+      images: product.imageUrl ? [{ url: product.imageUrl }] : undefined,
+    },
   };
 }
 
@@ -51,18 +60,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     product.categorySlug && product.categorySlug in CATEGORIES
       ? CATEGORIES[product.categorySlug as CategorySlug]
       : null;
+  const breadcrumbItems = [
+    { label: 'Ana Sayfa', href: '/' },
+    ...(categoryLabel ? [{ label: categoryLabel, href: `/kategori/${product.categorySlug}` }] : []),
+    { label: product.name },
+  ];
+  const productJsonLd = buildProductJsonLd(product);
 
   return (
     <div className="flex flex-col gap-8">
-      <Breadcrumb
-        items={[
-          { label: 'Ana Sayfa', href: '/' },
-          ...(categoryLabel
-            ? [{ label: categoryLabel, href: `/kategori/${product.categorySlug}` }]
-            : []),
-          { label: product.name },
-        ]}
-      />
+      <JsonLd data={buildBreadcrumbJsonLd(breadcrumbItems)} />
+      {productJsonLd && <JsonLd data={productJsonLd} />}
+      <Breadcrumb items={breadcrumbItems} />
       <section className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 md:gap-8 rounded-3xl border border-border bg-surface p-6 shadow-premium">
         <div className="flex items-center justify-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100 h-56 md:h-full relative overflow-hidden group">
           {/* eslint-disable-next-line @next/next/no-img-element -- harici CDN görselleri */}

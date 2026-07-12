@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google';
 import Link from 'next/link';
 import Navbar from '@/components/ui/Navbar';
+import { siteUrl } from '@/lib/seo';
 import './globals.css';
 
 const inter = Inter({
@@ -21,13 +22,29 @@ const plexMono = IBM_Plex_Mono({
   weight: ['500', '600'],
 });
 
+const DEFAULT_TITLE = 'FiyatKarşılaştır — Binlerce üründe en ucuzunu tek ekranda bul';
+const DEFAULT_DESCRIPTION =
+  'Trendyol, Hepsiburada, Amazon, Vatan Bilgisayar ve N11 fiyatlarını elektronikten modaya, ev & yaşamdan süpermarkete tek ekranda karşılaştırın, en ucuzunu bulun.';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: {
-    default: 'FiyatKarşılaştır — Telefon fiyatlarını tek yerden karşılaştır',
+    default: DEFAULT_TITLE,
     template: '%s | FiyatKarşılaştır',
   },
-  description:
-    'Trendyol, Hepsiburada, Amazon, Vatan ve N11 fiyatlarını tek ekranda karşılaştırın, en ucuzunu bulun.',
+  description: DEFAULT_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    locale: 'tr_TR',
+    siteName: 'FiyatKarşılaştır',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary',
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {

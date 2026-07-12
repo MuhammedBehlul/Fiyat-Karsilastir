@@ -21,3 +21,4 @@ export const getProductWithPrices = unstable_cache(queries.getProductWithPrices,
 export const getPriceHistory = unstable_cache(queries.getPriceHistory, ['price-history'], opts);
 export const getTopPriceDrops = unstable_cache(queries.getTopPriceDrops, ['price-drops'], opts);
 export const getCatalogStats = unstable_cache(queries.getCatalogStats, ['catalog-stats'], opts);
+export const getSitemapEntries = unstable_cache(queries.getSitemapEntries, ['sitemap-entries'], opts);

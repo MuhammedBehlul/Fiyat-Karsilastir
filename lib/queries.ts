@@ -448,6 +448,17 @@ export async function getCatalogStats(): Promise<{ productCount: number }> {
   return { productCount };
 }
 
+/** sitemap.xml için: her varyant sayfasının id'si + son fiyat güncellemesi (lastmod). */
+export async function getSitemapEntries(): Promise<{ id: number; lastModified: Date }[]> {
+  const rows = await prisma.$queryRaw<{ id: number; last_scraped: Date | null }[]>`
+    SELECT pv.id, MAX(pe.scraped_at) AS last_scraped
+    FROM product_variants pv
+    LEFT JOIN price_entries pe ON pe.variant_id = pv.id
+    GROUP BY pv.id
+  `;
+  return rows.map((r) => ({ id: r.id, lastModified: r.last_scraped ?? new Date() }));
+}
+
 /** Fiyat geçmişi: gün + site bazında son fiyat (grafik için). id = varyant id. */
 export async function getPriceHistory(
   variantId: number,
