@@ -1,14 +1,17 @@
 // Scrape sonuçlarını veritabanına yazar: marka+model düzeyinde Product,
-// depolama/RAM/renk düzeyinde ProductVariant eşleştirir; her kayıt için
-// varyanta bağlı PriceEntry açar. Emin olunamayan eşleşmeler MatchReview'a düşer.
+// kategoriye tanımlı nitelik imzası düzeyinde (lib/attributes.ts) ProductVariant
+// eşleştirir; her kayıt için varyanta bağlı PriceEntry açar. Emin olunamayan
+// eşleşmeler MatchReview'a düşer.
 
 import { prisma } from '../lib/db';
+import { parseProductTitle } from '../lib/variant';
 import {
-  parseProductTitle,
-  searchKeyOf,
-  variantKeyOf,
-  type VariantAttrs,
-} from '../lib/variant';
+  buildAttrValues,
+  searchKeyFor,
+  variantKeyFor,
+  CATEGORY_ATTRIBUTES,
+  type AttrValues,
+} from '../lib/attributes';
 import {
   matchProduct,
   matchVariant,
@@ -72,10 +75,18 @@ async function loadCatalog(): Promise<Map<string, CatalogProduct>> {
       id: true,
       brand: true,
       modelKey: true,
-      variants: { select: { id: true, storageGb: true, ramGb: true, color: true } },
+      variants: { select: { id: true, attrs: true } },
     },
   });
-  return new Map(rows.map((r) => [r.modelKey, r]));
+  return new Map(
+    rows.map((r) => [
+      r.modelKey,
+      {
+        ...r,
+        variants: r.variants.map((v) => ({ id: v.id, attrs: (v.attrs ?? {}) as AttrValues })),
+      },
+    ]),
+  );
 }
 
 export async function saveProducts(
@@ -178,20 +189,27 @@ export async function saveProducts(
       byModelKey.set(parsed.modelKey, product);
     }
 
-    // 2) Varyant eşleştir
-    const vmatch = matchVariant(product, parsed.attrs);
+    // 2) Varyant eşleştir: kategoriye tanımlı nitelik kümesiyle (lib/attributes.ts).
+    // Elektronik dışı kategorilerde hacim/ağırlık/paket başlıktan çıkarılır ki
+    // "500 ml" ile "1 L" aynı varyanta birleşmesin.
+    const defs = CATEGORY_ATTRIBUTES[p.categorySlug];
+    const values = buildAttrValues(p.categorySlug, parsed.attrs, p.name);
+    const vmatch = matchVariant(defs, product, values);
     let variant: CatalogVariant;
     if (vmatch.kind === 'reuse') {
       variant = vmatch.variant;
       if (Object.keys(vmatch.fill).length > 0) {
-        Object.assign(variant, vmatch.fill);
-        const attrs = variant as VariantAttrs;
+        variant.attrs = { ...variant.attrs, ...vmatch.fill };
         await prisma.productVariant.update({
           where: { id: variant.id },
           data: {
-            ...vmatch.fill,
-            variantKey: variantKeyOf(attrs),
-            searchKey: searchKeyOf(product.modelKey, attrs),
+            // Çift yazım (expand fazı): eski kolonlar attrs'tan türetilir.
+            storageGb: (variant.attrs.storage_gb as number | undefined) ?? null,
+            ramGb: (variant.attrs.ram_gb as number | undefined) ?? null,
+            color: (variant.attrs.color as string | undefined) ?? null,
+            attrs: variant.attrs,
+            variantKey: variantKeyFor(p.categorySlug, variant.attrs),
+            searchKey: searchKeyFor(product.modelKey, variant.attrs),
           },
         });
       }
@@ -210,28 +228,41 @@ export async function saveProducts(
         });
         outcome.reviewLogged++;
       }
+      // Çift yazım (expand fazı): eski kolonlar VE attrs birlikte yazılır;
+      // okuyucular attrs'a taşınınca kolonlar contract migration'ıyla düşer.
       const created = await prisma.productVariant.create({
         data: {
           productId: product.id,
-          storageGb: parsed.attrs.storageGb,
-          ramGb: parsed.attrs.ramGb,
-          color: parsed.attrs.color,
-          variantKey: variantKeyOf(parsed.attrs),
+          storageGb: (values.storage_gb as number | undefined) ?? null,
+          ramGb: (values.ram_gb as number | undefined) ?? null,
+          color: (values.color as string | undefined) ?? null,
+          attrs: values,
+          variantKey: variantKeyFor(p.categorySlug, values),
           displayName: p.name,
-          searchKey: searchKeyOf(product.modelKey, parsed.attrs),
+          searchKey: searchKeyFor(product.modelKey, values),
           imageUrl: p.imageUrl,
         },
         select: { id: true },
       });
-      variant = { id: created.id, ...parsed.attrs };
+      variant = { id: created.id, attrs: values };
       product.variants.push(variant);
     }
 
     // 3) Aynı URL'in geçmişi renksiz bir ikiz varyantta kaldıysa buraya taşı
     // (N11 zenginleştirmesi renk öğrenince eski "renk bilinmiyor" kaydı iyileşir).
-    if (parsed.attrs.color !== null) {
+    const colorDef = defs.find((d) => d.kind === 'color');
+    if (colorDef && variant.attrs.color != null) {
       const twin = product.variants.find(
-        (v) => v.id !== variant.id && v.color === null && v.storageGb === variant.storageGb,
+        (v) =>
+          v.id !== variant.id &&
+          v.attrs.color == null &&
+          defs.every(
+            (d) =>
+              d.key === colorDef.key ||
+              v.attrs[d.key] == null ||
+              variant.attrs[d.key] == null ||
+              v.attrs[d.key] === variant.attrs[d.key],
+          ),
       );
       if (twin) {
         const moved = await prisma.priceEntry.updateMany({

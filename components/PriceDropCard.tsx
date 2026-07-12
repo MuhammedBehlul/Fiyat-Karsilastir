@@ -22,7 +22,10 @@ export default function PriceDropCard({ drop }: { drop: PriceDrop }) {
           />
         </div>
         <div className="flex flex-col gap-2 p-2 pt-3">
-          <p className="line-clamp-2 text-body-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug">
+          <p
+            title={drop.name}
+            className="line-clamp-2 text-body-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug"
+          >
             {drop.name}
           </p>
           <div className="mt-1">

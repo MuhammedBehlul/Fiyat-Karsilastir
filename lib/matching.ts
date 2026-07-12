@@ -6,18 +6,13 @@
 // eşleşmesinde bilinmeyen alan kurallarıyla çözülür; emin olunamayan durumlar
 // sessizce kabul edilmez, inceleme kaydına düşer.
 
-import {
-  colorBaseOf,
-  diceSimilarity,
-  isBareBaseColor,
-  type VariantAttrs,
-} from './variant';
+import { colorBaseOf, diceSimilarity, isBareBaseColor } from './variant';
+import type { AttributeDef, AttrValue, AttrValues } from './attributes';
 
 export interface CatalogVariant {
   id: number;
-  storageGb: number | null;
-  ramGb: number | null;
-  color: string | null;
+  /** Bilinen nitelik değerleri (ProductVariant.attrs); bilinmeyen alan anahtarsız. */
+  attrs: AttrValues;
 }
 
 export interface CatalogProduct {
@@ -99,14 +94,9 @@ export function matchProduct(
 // ---------------------------------------------------------------------------
 
 export type VariantMatch =
-  | { kind: 'reuse'; variant: CatalogVariant; fill: Partial<VariantAttrs> }
+  | { kind: 'reuse'; variant: CatalogVariant; fill: AttrValues }
   | { kind: 'new' }
   | { kind: 'ambiguous'; candidates: CatalogVariant[] };
-
-/** İki kapasite değeri uyumlu mu? Bilinmeyen (null) joker sayılır. */
-function capacityCompatible(a: number | null, b: number | null): boolean {
-  return a === null || b === null || a === b;
-}
 
 /**
  * Renk uyumu: eşitse ya da biri çıplak temel renk ("mavi") diğeri aynı temelin
@@ -123,36 +113,65 @@ function colorCompatible(a: string | null, b: string | null): boolean {
   return baseA !== null && baseA === baseB && (isBareBaseColor(a) || isBareBaseColor(b));
 }
 
-function strictlyEqual(v: CatalogVariant, a: VariantAttrs): boolean {
-  return v.storageGb === a.storageGb && v.ramGb === a.ramGb && v.color === a.color;
+/**
+ * Tek nitelik uyumu, tanımın birleştirme kuralına göre:
+ * - 'fill' : bilinmeyen (null) joker sayılır (eski kapasite kuralı).
+ * - 'strict': bilinmeyen, değerliyle birleşmez (eski renk kuralı); renk
+ *   türünde ayrıca temel-renk gruplaması uygulanır.
+ */
+function valueCompatible(def: AttributeDef, a: AttrValue | null, b: AttrValue | null): boolean {
+  if (def.kind === 'color') return colorCompatible((a as string | null) ?? null, (b as string | null) ?? null);
+  if (a === null && b === null) return true;
+  if (a === null || b === null) return def.mergePolicy === 'fill';
+  return a === b;
+}
+
+const valOf = (values: AttrValues, key: string): AttrValue | null => values[key] ?? null;
+
+function strictlyEqual(defs: AttributeDef[], v: CatalogVariant, values: AttrValues): boolean {
+  return defs.every((d) => valOf(v.attrs, d.key) === valOf(values, d.key));
 }
 
 /**
- * Ürün içinde gelen niteliklere uyan varyantı seçer.
+ * Ürün içinde gelen niteliklere uyan varyantı seçer (nitelik kümesi kategoriye
+ * göre tanımlıdır — lib/attributes.ts).
  * - Tek uyumlu aday: yeniden kullan; adayın bilinmeyen alanlarını gelen
  *   değerlerle doldur (ör. "8/256" gören site RAM'i tamamlar).
  * - Birden çok aday: birebir eşit olan varsa o; yoksa belirsiz — çağıran kendi
  *   varyantını açar ve incelemeye yazar.
+ * Tanımsız nitelik kümesi (kitap gibi) her kaydı tek varyanta düşürür.
  */
-export function matchVariant(product: CatalogProduct, attrs: VariantAttrs): VariantMatch {
-  const candidates = product.variants.filter(
-    (v) =>
-      capacityCompatible(v.storageGb, attrs.storageGb) &&
-      capacityCompatible(v.ramGb, attrs.ramGb) &&
-      colorCompatible(v.color, attrs.color),
+export function matchVariant(
+  defs: AttributeDef[],
+  product: CatalogProduct,
+  values: AttrValues,
+): VariantMatch {
+  const candidates = product.variants.filter((v) =>
+    defs.every((d) => valueCompatible(d, valOf(v.attrs, d.key), valOf(values, d.key))),
   );
   if (candidates.length === 0) return { kind: 'new' };
 
-  const exact = candidates.filter((v) => strictlyEqual(v, attrs));
+  const exact = candidates.filter((v) => strictlyEqual(defs, v, values));
   if (exact.length === 1) return { kind: 'reuse', variant: exact[0], fill: {} };
   if (candidates.length > 1) return { kind: 'ambiguous', candidates };
 
   const v = candidates[0];
-  const fill: Partial<VariantAttrs> = {};
-  if (v.storageGb === null && attrs.storageGb !== null) fill.storageGb = attrs.storageGb;
-  if (v.ramGb === null && attrs.ramGb !== null) fill.ramGb = attrs.ramGb;
-  // Çıplak temel renk, nitelenmiş gelenle zenginleşir ("mavi" -> "sis-mavisi").
-  if (v.color !== null && attrs.color !== null && v.color !== attrs.color && isBareBaseColor(v.color) && !isBareBaseColor(attrs.color))
-    fill.color = attrs.color;
+  const fill: AttrValues = {};
+  for (const d of defs) {
+    const have = valOf(v.attrs, d.key);
+    const incoming = valOf(values, d.key);
+    if (incoming === null) continue;
+    if (have === null) {
+      fill[d.key] = incoming; // strict tanımda tek-taraflı null zaten aday olamazdı
+    } else if (
+      d.kind === 'color' &&
+      have !== incoming &&
+      isBareBaseColor(String(have)) &&
+      !isBareBaseColor(String(incoming))
+    ) {
+      // Çıplak temel renk, nitelenmiş gelenle zenginleşir ("mavi" -> "sis-mavisi").
+      fill[d.key] = incoming;
+    }
+  }
   return { kind: 'reuse', variant: v, fill };
 }

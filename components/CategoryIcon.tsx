@@ -63,6 +63,58 @@ const ICONS: Record<string, (className: string) => React.ReactNode> = {
       />
     </svg>
   ),
+  'ev-yasam': (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points="9 22 9 12 15 12 15 22" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  'anne-bebek': (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="M12 2a4 4 0 0 0-4 4v1.5a5.5 5.5 0 0 0 8 0V6a4 4 0 0 0-4-4Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 14.5a6.5 6.5 0 0 0 12 0" strokeLinecap="round" />
+      <circle cx="12" cy="18" r="3" />
+    </svg>
+  ),
+  'kitap-muzik-hobi': (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 6h10M6 10h10M6 14h10" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  'spor-outdoor': (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="m2 20 6-10 4 6 5-8 5 12Z" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="17" cy="6" r="2.5" />
+    </svg>
+  ),
+  kozmetik: (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <rect x="6" y="9" width="12" height="12" rx="2" />
+      <path d="M9 9V6a3 3 0 0 1 6 0v3M12 3v3" strokeLinecap="round" />
+    </svg>
+  ),
+  'oto-bahce-yapi': (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="m14.7 12.5 5.8 5.8a1.6 1.6 0 1 1-2.2 2.2l-5.8-5.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.4 5.6a4.5 4.5 0 0 0-6.3 0c-.8.8-1 1.7-.8 2.6L7 12.5H4v3.5l3.5 3.5h3.5l4.3-4.3c.9.2 1.8 0 2.6-.8a4.5 4.5 0 0 0 0-6.3Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  petshop: (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <circle cx="12" cy="13" r="3.5" />
+      <circle cx="6.5" cy="7.5" r="2" />
+      <circle cx="17.5" cy="7.5" r="2" />
+      <circle cx="3.5" cy="12" r="1.5" />
+      <circle cx="20.5" cy="12" r="1.5" />
+    </svg>
+  ),
+  supermarket: (c) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className={c}>
+      <path d="M2 10h20l-2 10H4L2 10Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m6 10 6-6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 const FALLBACK = (c: string) => (

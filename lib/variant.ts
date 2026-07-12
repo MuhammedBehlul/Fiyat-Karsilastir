@@ -162,6 +162,41 @@ const BRANDS: Record<string, string> = {
   dyson: 'Dyson', roborock: 'Roborock', dreame: 'Dreame', rowenta: 'Rowenta',
   kenwood: 'Kenwood', delonghi: 'DeLonghi', grundig: 'Grundig', profilo: 'Profilo',
   kiwi: 'Kiwi', korkmaz: 'Korkmaz', schafer: 'Schafer', kumtel: 'Kumtel',
+  // kozmetik / kişisel bakım
+  bargello: 'Bargello', nivea: 'Nivea', loreal: "L'Oréal", maybelline: 'Maybelline',
+  rexona: 'Rexona', avene: 'Avène', garnier: 'Garnier', bioderma: 'Bioderma',
+  vichy: 'Vichy', eucerin: 'Eucerin', neutrogena: 'Neutrogena', bepanthol: 'Bepanthol',
+  dove: 'Dove', flormar: 'Flormar', cerave: 'CeraVe', pantene: 'Pantene',
+  // süpermarket
+  nutella: 'Nutella', fairy: 'Fairy', finish: 'Finish', ariel: 'Ariel',
+  persil: 'Persil', domestos: 'Domestos', cif: 'Cif', omo: 'Omo',
+  solo: 'Solo', selpak: 'Selpak', lipton: 'Lipton', nescafe: 'Nescafé',
+  jacobs: 'Jacobs', ulker: 'Ülker', eti: 'Eti', torku: 'Torku',
+  pinar: 'Pınar', sutas: 'Sütaş', tadim: 'Tadım', doritos: 'Doritos',
+  pepsi: 'Pepsi', ruffles: 'Ruffles',
+  // petshop
+  purina: 'Purina', proplan: 'Pro Plan', whiskas: 'Whiskas', felix: 'Felix',
+  bonnie: 'Bonnie', reflex: 'Reflex', gourmet: 'Gourmet', acana: 'Acana', brit: 'Brit',
+  // moda / saat / ayakkabı
+  casio: 'Casio', seiko: 'Seiko', citizen: 'Citizen', fossil: 'Fossil',
+  festina: 'Festina', orient: 'Orient', swatch: 'Swatch', timex: 'Timex',
+  guess: 'Guess', curren: 'Curren', naviforce: 'Naviforce',
+  adidas: 'Adidas', puma: 'Puma', nike: 'Nike', skechers: 'Skechers',
+  hummel: 'Hummel', kinetix: 'Kinetix', lumberjack: 'Lumberjack',
+  converse: 'Converse', vans: 'Vans', reebok: 'Reebok', lescon: 'Lescon',
+  // spor / outdoor
+  domyos: 'Domyos', voit: 'Voit', altis: 'Altis', everlast: 'Everlast', stanley: 'Stanley',
+  akaso: 'Akaso', ecgspor: 'Ecgspor', salomon: 'Salomon', koctas: 'Koçtaş',
+  muggo: 'Muggo', quiksilver: 'Quiksilver', defacto: 'DeFacto', dji: 'DJI', akut: 'AKUT',
+  // anne & bebek
+  prima: 'Prima', pampers: 'Pampers', molfix: 'Molfix', sleepy: 'Sleepy',
+  huggies: 'Huggies', chicco: 'Chicco', lego: 'LEGO', barbie: 'Barbie',
+  // ev & yaşam
+  pasabahce: 'Paşabahçe', lav: 'LAV', emsan: 'Emsan', keramika: 'Keramika',
+  ozdilek: 'Özdilek', bernardo: 'Bernardo',
+  // oto / bahçe / yapı market
+  makita: 'Makita', dewalt: 'DeWalt', karcher: 'Kärcher', einhell: 'Einhell',
+  gardena: 'Gardena', knipex: 'Knipex', michelin: 'Michelin',
 };
 
 /** Alt marka/seri -> ana marka: bir site markayı yazarken diğeri atlayabiliyor. */
@@ -301,24 +336,31 @@ function matchColorAt(tokens: string[], i: number): { len: number; canonical: st
 }
 
 /**
- * Katlanmış başlıkta SON renk ifadesini bulur (renk hemen hep sondadır;
- * baştaki eşleşmeler "Redmi..." gibi model parçalarıyla karışabilir).
+ * Katlanmış başlıkta renk ifadelerini bulur. Kanonik renk SON eşleşmedir
+ * (renk hemen hep sondadır; baştaki eşleşmeler "Redmi..." gibi model
+ * parçalarıyla karışabilir) — ama moda/spor gibi kategorilerde site'ler
+ * renk adını başlıkta İKİ KEZ geçiriyor (ör. "... Taxer Walk Mavi Erkek
+ * Şort Mavi"): yalnızca sonuncuyu silmek ilkini modelKey'de bırakır ve aynı
+ * ürünün farklı renkleri "sahte farklı model" gibi görünüp eşleşmeyi
+ * bozar (Dice benzerliği düşer). Bulunan TÜM renk aralıkları temizlenir.
  */
 function scanColor(folded: string): ColorScan {
   const tokens = folded.split(/\s+/).filter(Boolean);
-  let found: { start: number; len: number; canonical: string } | null = null;
+  const ranges: { start: number; len: number }[] = [];
+  let canonical: string | null = null;
 
   for (let i = 0; i < tokens.length; i++) {
     const m = matchColorAt(tokens, i);
     if (m) {
-      found = { start: i, ...m };
+      canonical = m.canonical; // en son eşleşme kanonik renk kabul edilir
+      ranges.push({ start: i, len: m.len });
       i += m.len - 1; // eşleşen ifadenin içinden ikinci kez başlama
     }
   }
 
-  if (!found) return { color: null, cleaned: folded };
-  const kept = tokens.filter((_, idx) => idx < found!.start || idx >= found!.start + found!.len);
-  return { color: found.canonical, cleaned: kept.join(' ') };
+  if (!canonical) return { color: null, cleaned: folded };
+  const kept = tokens.filter((_, idx) => !ranges.some((r) => idx >= r.start && idx < r.start + r.len));
+  return { color: canonical, cleaned: kept.join(' ') };
 }
 
 /** Yapılandırılmış alanlardan gelen serbest renk metnini kanonik slug'a çevirir. */
@@ -348,8 +390,15 @@ const GENERIC_ACCESSORY_PATTERNS: RegExp[] = [
   /\btakip cihazi/, /\bsmart tag/, /\bsmarttag/, /\bairtag/, /\bakilli takip/,
 ];
 
-/** "X ile uyumlu ..." başlıkları: kulaklık hariç her kategoride yedek parça/aksesuar işareti. */
+/** "X ile uyumlu ..." başlıkları: çoğu kategoride yedek parça/aksesuar işareti. */
 const COMPAT_PATTERN = /\bile uyumlu\b/;
+
+/**
+ * COMPAT_PATTERN'in aksesuar SAYILMADIĞI kategoriler: kulaklıklar kendilerini
+ * "Tüm Telefonlar ile Uyumlu" diye tanıtır; oto/bahçe/yapı markette ürünün
+ * kendisi zaten bir araca/modele uyumluluk bildirir ("Ford Focus ile uyumlu paspas").
+ */
+const COMPAT_EXEMPT = new Set(['kulaklik', 'oto-bahce-yapi']);
 
 const ACCESSORY_PATTERNS: Record<string, RegExp[]> = {
   telefon: [
@@ -386,13 +435,33 @@ const ACCESSORY_PATTERNS: Record<string, RegExp[]> = {
     /\baksesuar seti/, /\bfircasi\b/, /\bbasligi\b/, /\bbicagi\b/, /\bkartus/,
     /\bkese\b/, /\bkapsul/, /\btemizleme tableti/, /\bkirec onleyici/,
   ],
+  // Yeni kategoriler (Faz 3): kalıplar bilinçli olarak dar — geniş listelemelerde
+  // hemen her şey kategorinin meşru ürünüdür, yalnızca açık yedek parça/aparat elenir.
+  'ev-yasam': [/\byedek parca/, /\bmontaj kiti/, /\bmontaj aparati/],
+  'anne-bebek': [/\byedek parca/, /\byedek emzik ucu/],
+  // Saat listelerinde kordon/kayış/pil, ayakkabıda bağcık/tabanlık/boya aksesuar işaretidir.
+  moda: [
+    /\bkordon\b/, /\bkordonu\b/, /\bkayis\b/, /\bkayisi\b/, /\bsaat pili/, /\bsaat kutusu/,
+    /\bbagcik/, /\btabanlik/, /\bayakkabi boyasi/, /\bayakkabi bakim/, /\bcanta askisi/,
+  ],
+  'kitap-muzik-hobi': [/\bkitap ayraci/, /\bkitap kilifi/, /\bkitap standi/, /\bkitap tutucu/],
+  'spor-outdoor': [/\byedek parca/],
+  // Vatan'ın kişisel bakım listesi elektrikli cihaz yedeklerini de içeriyor
+  // ("One Blade Yedek Bıçak") — canlı dry-run'da görüldü.
+  kozmetik: [
+    /\bbos sise/, /\bbos kavanoz/, /\bdoldurulabilir sise/, /\bmakyaj cantasi/,
+    /\bkozmetik cantasi/, /\byedek bicak/, /\byedek baslik/, /\byedek epilasyon basligi/,
+  ],
+  'oto-bahce-yapi': [],
+  petshop: [],
+  supermarket: [],
 };
 
 /** Kategori slug'ına göre "bu başlık bu kategorinin ürünü değil" kararı. */
 export function isAccessoryTitle(categorySlug: string, foldedTitle: string): boolean {
   const patterns = ACCESSORY_PATTERNS[categorySlug];
   if (!patterns) return false;
-  if (categorySlug !== 'kulaklik' && COMPAT_PATTERN.test(foldedTitle)) return true;
+  if (!COMPAT_EXEMPT.has(categorySlug) && COMPAT_PATTERN.test(foldedTitle)) return true;
   return [...GENERIC_ACCESSORY_PATTERNS, ...patterns].some((p) => p.test(foldedTitle));
 }
 
@@ -520,10 +589,8 @@ function firstSegment(cleaned: string): string {
 // Varyant anahtarı ve benzerlik
 // ---------------------------------------------------------------------------
 
-/** Deterministik varyant imzası; bilinmeyen alan "?" ile temsil edilir. */
-export function variantKeyOf(attrs: VariantAttrs): string {
-  return `s${attrs.storageGb ?? '?'}|r${attrs.ramGb ?? '?'}|${attrs.color ?? '?'}`;
-}
+// Varyant anahtarı üretimi lib/attributes.ts'e taşındı (variantKeyFor):
+// imza artık kategoriye göre tanımlı nitelik kümesinden türetilir.
 
 /** Varyantın insan-okur etiketi: "128 GB · 8 GB RAM · Mavi" gibi. */
 export function variantLabel(attrs: VariantAttrs): string {

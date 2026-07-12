@@ -7,11 +7,16 @@ const BASE = 'https://www.vatanbilgisayar.com';
 export const vatan: SiteScraper = {
   site: 'vatan',
   // robots.txt "?page=" parametresini yasaklıyor; kategori başına yalnızca ilk sayfa.
+  // Vatan elektronik odaklı: yeni taksonomiden yalnızca "Sağlık, Bakım, Kozmetik"
+  // grubuna makul bir karşılık var (elektrikli kişisel bakım cihazları — canlı
+  // doğrulandı 2026-07-12). Petshop/süpermarket/moda vb. bu sitede yok; kategori
+  // başına 5 site şartı yok, uydurma eşleme yapılmaz.
   listings: [
     { category: 'telefon', url: `${BASE}/cep-telefonu-modelleri/` },
     { category: 'laptop', url: `${BASE}/notebook/` },
     { category: 'kulaklik', url: `${BASE}/bluetooth-kulaklik-mikrofon/` },
     { category: 'ev-aletleri', url: `${BASE}/elektrikli-ev-aletleri/` },
+    { category: 'kozmetik', url: `${BASE}/kisisel-bakim-urunleri/` },
   ],
   waitForSelector: '.product-list',
   parse(html) {

@@ -32,8 +32,11 @@ model Product {
   @@map("products")
 }
 
-/// Varyant imzası: depolama / RAM / renk. Bilinmeyen alan null'dur ve
-/// variantKey'de "?" ile temsil edilir; eşleştirme kuralları lib/matching.ts'te.
+/// Varyant imzası: kategoriye göre tanımlı nitelik kümesi (lib/attributes.ts).
+/// Bilinen değerler attrs JSONB'sinde tutulur ({"storage_gb":128,"color":"mavi"});
+/// bilinmeyen alan anahtarsızdır ve variantKey'de "?" ile temsil edilir.
+/// storageGb/ramGb/color eski kolonlardır: attrs'a geçiş (expand/contract)
+/// tamamlanana dek çift yazılır, okuyucular taşındıktan sonra düşürülecek.
 model ProductVariant {
   id           Int          @id @default(autoincrement())
   productId    Int          @map("product_id")
@@ -41,6 +44,7 @@ model ProductVariant {
   storageGb    Int?         @map("storage_gb")
   ramGb        Int?         @map("ram_gb")
   color        String?
+  attrs        Json         @default("{}")
   variantKey   String       @map("variant_key")
   displayName  String       @map("display_name")
   searchKey    String       @map("search_key")

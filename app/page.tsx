@@ -1,9 +1,9 @@
 import ProductCard from '@/components/ProductCard';
-import CategoryGrid from '@/components/CategoryGrid';
+import CategoryTabs from '@/components/CategoryTabs';
 import PriceDropSection from '@/components/PriceDropSection';
 import Card from '@/components/ui/Card';
 import { getCatalogStats, getCategories, getFeaturedProducts } from '@/lib/cached';
-import { SITES } from '@/lib/types';
+import { SITES, CATEGORY_GROUPS } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +13,29 @@ export default async function HomePage() {
     getCategories().catch(() => []),
     getFeaturedProducts(12).catch(() => []),
   ]);
+
+  // Kategori gruplama mantığı (tablar için)
+  const groupedCategories = Object.entries(CATEGORY_GROUPS).map(([groupSlug, groupInfo]) => {
+    const matchingCategories = categories.filter((c) =>
+      (groupInfo.categories as readonly string[]).includes(c.slug)
+    );
+    return {
+      groupSlug,
+      groupLabel: groupInfo.label as string,
+      categories: matchingCategories,
+    };
+  }).filter((g) => g.categories.length > 0);
+
+  // Gruplara dahil edilmemiş kategoriler varsa Diğer altına topla
+  const groupedSlugs = new Set<string>(Object.values(CATEGORY_GROUPS).flatMap((g) => g.categories));
+  const otherCategories = categories.filter((c) => !groupedSlugs.has(c.slug));
+  if (otherCategories.length > 0) {
+    groupedCategories.push({
+      groupSlug: 'other',
+      groupLabel: 'Diğer',
+      categories: otherCategories,
+    });
+  }
 
   return (
     <div className="flex flex-col gap-12">
@@ -106,7 +129,7 @@ export default async function HomePage() {
 
       <section>
         <h2 className="mb-4 font-heading text-heading font-semibold text-text">Kategoriler</h2>
-        <CategoryGrid categories={categories} />
+        <CategoryTabs groups={groupedCategories} />
       </section>
 
       <PriceDropSection />

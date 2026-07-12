@@ -5,6 +5,7 @@ import type { CategorySlug, ScrapedProduct, SiteName } from '../lib/types';
 import type { VariantAttrs } from '../lib/variant';
 import { BlockedError, fetchHtml, politeDelay } from './http';
 import { fetchHtmlWithBrowser } from './browser';
+import type { CategoryProgressEvent } from './progress-protocol';
 
 /** Kategori başına gezilecek sayfa üst sınırı (SCRAPE_MAX_PAGES ile ayarlanır, 1-10). */
 export function maxPagesPerCategory(): number {
@@ -50,7 +51,16 @@ export interface SiteResult {
   errors: string[];
 }
 
-export async function runScraper(scraper: SiteScraper): Promise<SiteResult> {
+export interface RunScraperOptions {
+  /** Her kategori başlarken/bitince çağrılır (admin panelindeki canlı ilerleme çubuğu için). */
+  onCategory?: (event: CategoryProgressEvent) => void;
+}
+
+export async function runScraper(
+  scraper: SiteScraper,
+  opts: RunScraperOptions = {},
+): Promise<SiteResult> {
+  const { onCategory } = opts;
   const products: ScrapedProduct[] = [];
   const errors: string[] = [];
   const seenUrls = new Set<string>();
@@ -94,7 +104,18 @@ export async function runScraper(scraper: SiteScraper): Promise<SiteResult> {
     return viaBrowser;
   };
 
-  for (const listing of scraper.listings) {
+  for (const [listingIndex, listing] of scraper.listings.entries()) {
+    const categoryTotal = scraper.listings.length;
+    onCategory?.({
+      type: 'category',
+      phase: 'start',
+      site: scraper.site,
+      category: listing.category,
+      index: listingIndex + 1,
+      total: categoryTotal,
+    });
+    let categoryFresh = 0;
+    let categoryPages = 0;
     const cap = listing.pageUrl ? pageCap : 1;
     for (let page = 1; page <= cap; page++) {
       const url = page === 1 ? listing.url : listing.pageUrl!(page);
@@ -105,6 +126,7 @@ export async function runScraper(scraper: SiteScraper): Promise<SiteResult> {
         errors.push(`${url}: ${(err as Error).message}`);
         break; // bu kategorinin kalan sayfalarını zorlama, sıradaki kategoriye geç
       }
+      categoryPages++;
       // Site sayfa sınırını aşınca genelde son sayfayı/ilk sayfayı tekrarlar:
       // yeni URL çıkmadıysa kategori bitti demektir.
       let fresh = 0;
@@ -115,8 +137,19 @@ export async function runScraper(scraper: SiteScraper): Promise<SiteResult> {
         products.push({ ...p, categorySlug: listing.category });
         fresh++;
       }
+      categoryFresh += fresh;
       if (found.length === 0 || fresh === 0) break;
     }
+    onCategory?.({
+      type: 'category',
+      phase: 'done',
+      site: scraper.site,
+      category: listing.category,
+      index: listingIndex + 1,
+      total: categoryTotal,
+      productsFound: categoryFresh,
+      pagesFetched: categoryPages,
+    });
   }
 
   return { site: scraper.site, products, usedBrowser, pagesFetched, errors };

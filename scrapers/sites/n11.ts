@@ -89,6 +89,18 @@ export const n11: SiteScraper = {
     listing('laptop', 'bilgisayar/dizustu-bilgisayar'),
     listing('kulaklik', 'telefon-ve-aksesuarlari/cep-telefonu-aksesuarlari/bluetooth-kulaklik'),
     listing('ev-aletleri', 'elektrikli-ev-aletleri'),
+    // Yeni yollar site navigasyonundan alındı ve canlı doğrulandı (2026-07-12).
+    // Üst vitrin sayfaları (/spor-outdoor, /kozmetik-kisisel-bakim) ürün kartı
+    // döndürmüyor — ürün listeleyen alt kategoriler kullanılıyor.
+    listing('ev-yasam', 'mutfak-gerecleri'),
+    listing('anne-bebek', 'bebek-bezi-ve-islak-mendil'),
+    listing('moda', 'saat'),
+    listing('kitap-muzik-hobi', 'kitap'),
+    listing('spor-outdoor', 'outdoor-ve-kamp'),
+    listing('kozmetik', 'parfum-ve-deodorant'),
+    listing('oto-bahce-yapi', 'yapi-market-ve-bahce'),
+    listing('petshop', 'evcil-hayvan-urunleri'),
+    listing('supermarket', 'supermarket'),
   ],
   waitForSelector: 'a.product-item',
   enrichDetail: fetchVariantDetails,

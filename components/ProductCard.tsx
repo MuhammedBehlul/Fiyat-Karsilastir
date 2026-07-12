@@ -71,7 +71,10 @@ export default function ProductCard({ product }: { product: ProductWithPrices })
 
         <div className="flex flex-1 flex-col gap-3.5 p-4 pt-4 sm:p-4.5 sm:pt-4">
           <div>
-            <p className="line-clamp-2 text-body-sm font-semibold text-text leading-snug group-hover:text-primary transition-colors duration-200">
+            <p
+              title={product.name}
+              className="line-clamp-2 text-body-sm font-semibold text-text leading-snug group-hover:text-primary transition-colors duration-200"
+            >
               {product.name}
             </p>
             <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-caption text-muted/80">

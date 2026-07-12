@@ -15,11 +15,22 @@ const listing = (category: CategorySlug, path: string) => ({
 
 export const trendyol: SiteScraper = {
   site: 'trendyol',
+  // Yeni kategori yolları sitenin kendi sitemap_categories.xml'inden alındı ve
+  // canlı doğrulandı (2026-07-12, hepsi ürün kartı döndürüyor).
   listings: [
     listing('telefon', 'telefon-x-c104025'),
     listing('laptop', 'laptop-x-c103108'),
     listing('kulaklik', 'bluetooth-kulaklik-x-c108626'),
     listing('ev-aletleri', 'elektrikli-ev-aletleri-x-c1104'),
+    listing('ev-yasam', 'ev-tekstili-x-c94'),
+    listing('anne-bebek', 'bebek-bezi-x-c1363'),
+    listing('moda', 'saat-x-c34'),
+    listing('kitap-muzik-hobi', 'kitap-x-c91'),
+    listing('spor-outdoor', 'outdoor-x-c103507'),
+    listing('kozmetik', 'parfum-ve-deodorant-x-c103717'),
+    listing('oto-bahce-yapi', 'bahce-yapi-market-x-c103719'),
+    listing('petshop', 'kedi-mamasi-x-c103588'),
+    listing('supermarket', 'supermarket-x-c103799'),
   ],
   waitForSelector: '.search-result-content a.product-card',
   parse(html) {

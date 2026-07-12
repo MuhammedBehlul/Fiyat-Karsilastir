@@ -189,7 +189,7 @@ export default function CategoryDropdown({ categories }: CategoryDropdownProps) 
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
-                                <span className="block truncate text-body-sm font-semibold text-text mb-0.5">{p.name}</span>
+                                <span title={p.name} className="block truncate text-body-sm font-semibold text-text mb-0.5">{p.name}</span>
                                 {p.prices[0] && (
                                   <span className="text-caption font-mono font-bold text-success">
                                     {p.prices[0].price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 })}

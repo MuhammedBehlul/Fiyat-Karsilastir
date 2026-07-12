@@ -17,11 +17,22 @@ const listing = (category: CategorySlug, path: string) => ({
 // bu yüzden önce fetch denenir, Playwright yalnızca fallback.
 export const hepsiburada: SiteScraper = {
   site: 'hepsiburada',
+  // Yeni kategori yolları sitenin anasayfa navigasyonundan alındı ve canlı
+  // doğrulandı (2026-07-12, hepsi ürün kartı döndürüyor).
   listings: [
     listing('telefon', 'telefonlar-c-2147483642'),
     listing('laptop', 'laptop-notebook-dizustu-bilgisayarlar-c-98'),
     listing('kulaklik', 'kulakliklar-c-520'),
     listing('ev-aletleri', 'elektrikli-ev-aletleri-c-17071'),
+    listing('ev-yasam', 'ev-gerecleri-c-60002911'),
+    listing('anne-bebek', 'bebek-bezi-c-60001048'),
+    listing('moda', 'bayan-kol-saatleri-c-25008405'),
+    listing('kitap-muzik-hobi', 'kitaplar-c-2147483645'),
+    listing('spor-outdoor', 'spor-fitness-urunleri-c-2147483635'),
+    listing('kozmetik', 'parfumler-c-341406'),
+    listing('oto-bahce-yapi', 'yapi-market-hirdavatlar-c-2147483620'),
+    listing('petshop', 'pet-shop-c-2147483616'),
+    listing('supermarket', 'supermarket-c-2147483619'),
   ],
   waitForSelector: 'li[class*="productListContent"]',
   parse(html) {

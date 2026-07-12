@@ -41,7 +41,10 @@ export default async function CategoryWidgets({ categorySlug }: { categorySlug: 
                   />
                 </div>
                 <div className="flex flex-col justify-between min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-text truncate group-hover:text-primary transition-colors leading-tight">
+                  <p
+                    title={d.name}
+                    className="text-[13px] font-semibold text-text truncate group-hover:text-primary transition-colors leading-tight"
+                  >
                     {d.name}
                   </p>
                   <div className="flex items-end justify-between gap-1.5 mt-1">
@@ -92,7 +95,10 @@ export default async function CategoryWidgets({ categorySlug }: { categorySlug: 
                     />
                   </div>
                   <div className="flex flex-col justify-between min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-text truncate group-hover:text-primary transition-colors leading-tight">
+                    <p
+                      title={p.name}
+                      className="text-[13px] font-semibold text-text truncate group-hover:text-primary transition-colors leading-tight"
+                    >
                       {p.name}
                     </p>
                     <div className="flex items-end justify-between gap-1.5 mt-1">

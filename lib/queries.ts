@@ -258,7 +258,12 @@ export async function getProductsByCategory(
         ? Prisma.sql`vp.min_price ASC`
         : sort === 'newest'
           ? Prisma.sql`pv.created_at DESC`
-          : Prisma.sql`vp.site_count DESC, vp.min_price ASC`;
+          : // 'popular': önce karşılaştırılabilirlik (kaç mağazada), eşitlikte EN UCUZ
+            // değil EN YENİ öne alınır — az eşleşmeli (yeni/niş) kategorilerde
+            // site_count hep 1 olduğundan "ucuz ASC" kalan tüm listeyi rastgele
+            // ucuz/alakasız ürünlerin öne çıktığı bir sıralamaya çeviriyordu; "yeni"
+            // en azından tazelik sinyali taşır, fiyatın alakayla ilgisi yoktur.
+            Prisma.sql`vp.site_count DESC, pv.created_at DESC`;
 
   const rows = await prisma.$queryRaw<{ variant_id: number; total_count: bigint }[]>`
     ${VARIANT_PRICE_CTE}

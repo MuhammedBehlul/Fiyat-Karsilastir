@@ -9,11 +9,19 @@ export const amazon: SiteScraper = {
   // Kategori browse sayfaları; ürünler .octopus-pc-item kartlarında SSR geliyor.
   // Browse (/b?node=) sayfalarında klasik sayfalama yok — kategori başına tek sayfa.
   // Node id'leri Amazon'un kendi kategori ağacından/bestseller dizininden alındı.
+  // Yeni node'lar sitenin üst navigasyonundan alındı ve canlı doğrulandı
+  // (2026-07-12). Moda/kitap/kozmetik/süpermarket üst node'ları octopus kartı
+  // olmayan vitrin sayfaları döndürüyor — o kategoriler Amazon'da kapsanmıyor.
   listings: [
     { category: 'telefon', url: `${BASE}/b?node=13709907031` },
     { category: 'laptop', url: `${BASE}/b?node=12601898031` },
     { category: 'kulaklik', url: `${BASE}/b?node=13710018031` },
     { category: 'ev-aletleri', url: `${BASE}/b?node=28201737031` },
+    { category: 'ev-yasam', url: `${BASE}/b?node=12466668031` },
+    { category: 'anne-bebek', url: `${BASE}/b?node=12466208031` },
+    { category: 'spor-outdoor', url: `${BASE}/b?node=12467068031` },
+    { category: 'oto-bahce-yapi', url: `${BASE}/b?node=12466724031` },
+    { category: 'petshop', url: `${BASE}/b?node=20230635031` },
   ],
   waitForSelector: '.octopus-pc-item',
   parse(html) {

@@ -14,15 +14,47 @@ export const SITE_LABELS: Record<SiteName, string> = {
 
 import type { VariantAttrs } from './variant';
 
-/** Taranan kategoriler: slug -> görünen ad. */
+/** Taranan yaprak kategoriler: slug -> görünen ad. Tarama/eşleştirme birimi budur. */
 export const CATEGORIES = {
   telefon: 'Telefon',
   laptop: 'Laptop',
   kulaklik: 'Kulaklık',
   'ev-aletleri': 'Ev Aletleri',
+  'ev-yasam': 'Ev & Yaşam',
+  'anne-bebek': 'Anne & Bebek',
+  moda: 'Moda & Aksesuar',
+  'kitap-muzik-hobi': 'Kitap, Müzik & Hobi',
+  'spor-outdoor': 'Spor & Outdoor',
+  kozmetik: 'Kozmetik & Kişisel Bakım',
+  'oto-bahce-yapi': 'Oto, Bahçe & Yapı Market',
+  petshop: 'Petshop',
+  supermarket: 'Süpermarket',
 } as const;
 
 export type CategorySlug = keyof typeof CATEGORIES;
+
+/**
+ * Üst düzey menü grupları (cimri tarzı): navigasyon içindir, tarama birimi
+ * DEĞİLDİR — scraper/eşleştirme/aksesuar kalıpları yaprak slug'larla çalışır.
+ * Nesne anahtar sırası navbar'daki görünüm sırasıdır.
+ */
+export const CATEGORY_GROUPS = {
+  elektronik: {
+    label: 'Elektronik, Cep Telefonu',
+    categories: ['telefon', 'laptop', 'kulaklik', 'ev-aletleri'],
+  },
+  'ev-yasam': { label: 'Ev, Yaşam, Ofis, Kırtasiye', categories: ['ev-yasam'] },
+  'anne-bebek': { label: 'Anne, Bebek, Oyuncak', categories: ['anne-bebek'] },
+  moda: { label: 'Saat, Moda, Takı, Ayakkabı', categories: ['moda'] },
+  'kitap-muzik-hobi': { label: 'Kitap, Müzik, Hobi', categories: ['kitap-muzik-hobi'] },
+  'spor-outdoor': { label: 'Spor, Outdoor', categories: ['spor-outdoor'] },
+  kozmetik: { label: 'Sağlık, Bakım, Kozmetik', categories: ['kozmetik'] },
+  'oto-bahce-yapi': { label: 'Oto, Bahçe, Yapı Market', categories: ['oto-bahce-yapi'] },
+  petshop: { label: 'Petshop', categories: ['petshop'] },
+  supermarket: { label: 'Süpermarket', categories: ['supermarket'] },
+} as const satisfies Record<string, { label: string; categories: readonly CategorySlug[] }>;
+
+export type CategoryGroupSlug = keyof typeof CATEGORY_GROUPS;
 
 /** Bir scraper'ın listeleme sayfasından çıkardığı ham ürün kaydı. */
 export interface ScrapedProduct {
