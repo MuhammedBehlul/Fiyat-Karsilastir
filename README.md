@@ -86,7 +86,39 @@ istekler arası 2-4 sn gecikme, gerçekçi User-Agent, site başına bağımsız
 ## Deploy
 
 1. **Supabase:** proje oluştur, `DATABASE_URL` (pooler, 6543) + `DIRECT_URL` (5432) al.
-2. **Vercel:** repo'yu bağla, iki env değişkenini ekle. Build öncesi `prisma generate`
-   `postinstall` script'iyle otomatik çalışır.
-3. **GitHub:** repo Secrets'a `DATABASE_URL` ve `DIRECT_URL` ekle — `.github/workflows/scrape.yml`
-   her gün 06:30 (TR) çalışır; Actions sekmesinden elle de tetiklenebilir.
+2. **Vercel:** repo'yu bağla (framework Next.js otomatik algılanır, `vercel.json` gerekmez).
+   Aşağıdaki env değişkenlerini ekle. Build öncesi `prisma generate` `postinstall`
+   script'iyle otomatik çalışır.
+3. İlk deploy bitince Vercel'in verdiği `*.vercel.app` adresini `NEXT_PUBLIC_SITE_URL`'e
+   yazıp **yeniden deploy et** (bu değer build'e gömülür, sonradan env değiştirmek
+   tek başına yetmez).
+4. **GitHub Secrets** (repo Settings → Secrets and variables → Actions) — `.github/workflows/scrape.yml`
+   her gün 06:30 (TR) bunları kullanır; Actions sekmesinden elle de tetiklenebilir.
+
+### Vercel ortam değişkenleri
+
+| Değişken | Zorunlu mu | Not |
+|---|---|---|
+| `DATABASE_URL` | ✅ | Supabase pooler, 6543, `pgbouncer=true` |
+| `DIRECT_URL` | ✅ | Supabase direct, 5432 |
+| `AUTH_SECRET` | ✅ | Kullanıcı oturum çerezini imzalar — rastgele 32+ bayt |
+| `NEXT_PUBLIC_SITE_URL` | ✅ | sitemap/robots/canonical/OG için (bkz. adım 3) |
+| `ADMIN_PASSWORD` | ✅ | `/admin` paneli şifresi — `.env.example`'daki `change-me`'yi değiştirin |
+| `GITHUB_ACTIONS_TOKEN` | Admin panelden scrape tetiklemek isteniyorsa | Fine-grained PAT, yalnızca bu repo, "Actions: Read and write" |
+| `RESEND_API_KEY` + `EMAIL_FROM` | Gerçek e-posta göndermek için | Yoksa şifre sıfırlama/fiyat alarmı e-postaları konsola yazılır (Vercel loglarında görünür, kullanıcıya ulaşmaz) |
+| `REVALIDATE_TOKEN` | Öneri | `REVALIDATE_URL` ile birlikte GitHub Secrets'a da eklenmeli (aşağıya bakın) |
+| `ERROR_WEBHOOK_URL` | Opsiyonel | Sunucu hatalarını bir Discord/Slack webhook'una bildirir |
+| `AFFILIATE_<SITE>_PARAMS` | Opsiyonel | Ortaklık programına üye olunca eklenir; yoksa linkler değişmeden kalır |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Opsiyonel | Gizlilik/KVKK sayfalarında gösterilir |
+
+### GitHub Secrets (scrape cron için)
+
+| Secret | Not |
+|---|---|
+| `DATABASE_URL`, `DIRECT_URL` | Vercel'dekiyle aynı |
+| `REVALIDATE_URL` | `https://<domain>/api/revalidate` — scrape bitince Vercel'in 1 saatlik cache'ini beklemeden düşürür |
+| `REVALIDATE_TOKEN` | Vercel'e eklediğiniz `REVALIDATE_TOKEN` ile **birebir aynı** olmalı |
+
+Deploy sonrası doğrulama: `/sitemap.xml` ve `/robots.txt`'nin gerçek domainle döndüğünü,
+`npm run scrape -- --dry` ile scraper'ın çalıştığını, `/admin`'e yeni `ADMIN_PASSWORD` ile
+giriş yapılabildiğini kontrol edin.
