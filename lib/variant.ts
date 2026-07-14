@@ -390,8 +390,8 @@ const GENERIC_ACCESSORY_PATTERNS: RegExp[] = [
   /\btakip cihazi/, /\bsmart tag/, /\bsmarttag/, /\bairtag/, /\bakilli takip/,
 ];
 
-/** "X ile uyumlu ..." başlıkları: çoğu kategoride yedek parça/aksesuar işareti. */
-const COMPAT_PATTERN = /\bile uyumlu\b/;
+/** "X ile uyumlu ..." veya "X uyumlu ..." başlıkları: çoğu kategoride yedek parça/aksesuar işareti. */
+const COMPAT_PATTERN = /\b(ile\s+)?uyumlu\b/;
 
 /**
  * COMPAT_PATTERN'in aksesuar SAYILMADIĞI kategoriler: kulaklıklar kendilerini
@@ -402,7 +402,8 @@ const COMPAT_EXEMPT = new Set(['kulaklik', 'oto-bahce-yapi']);
 
 const ACCESSORY_PATTERNS: Record<string, RegExp[]> = {
   telefon: [
-    /\bkilif/, /\bekran koruyucu/, /\bcam koruyucu/, /\bkoruyucu\b/, /\btemperli/,
+    /\bkilif/, /\bkilifi\b/, /\bmagsafe\b/, /\bsilikon\b/, /\bkamera koruma/, /\barkalik\b/,
+    /\bekran koruyucu/, /\bcam koruyucu/, /\bkoruyucu\b/, /\btemperli/,
     /\bkirilmaz\b/, /\bsarj aleti/, /\bsarj cihazi/, /\bsarj kablo/, /\bguc adaptoru/,
     /\badaptor/, /\bpowerbank/, /\bpower bank/, /\btasinabilir sarj/, /\bkablo\b/,
     /\bkablosu\b/, /\btutucu/, /\bstand\b/, /\bstandi\b/, /\bkulaklik/, /\bkulakici/,

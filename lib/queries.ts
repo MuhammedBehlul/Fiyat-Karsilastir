@@ -274,11 +274,21 @@ export async function getSimilarProducts(
 ): Promise<ProductWithPrices[]> {
   const source = await prisma.productVariant.findUnique({
     where: { id: variantId },
-    select: { productId: true, product: { select: { brand: true, categoryId: true } } },
+    select: {
+      productId: true,
+      product: { select: { brand: true, categoryId: true } },
+      priceEntries: {
+        orderBy: { scrapedAt: 'desc' },
+        take: 1,
+        select: { price: true }
+      }
+    },
   });
   if (!source?.product.categoryId) return [];
 
   const brand = source.product.brand;
+  const sourcePrice = source.priceEntries[0]?.price ? Number(source.priceEntries[0].price) : 0;
+
   const rows = await prisma.$queryRaw<{ variant_id: number }[]>`
     ${VARIANT_PRICE_CTE}
     SELECT pv.id AS variant_id
@@ -287,9 +297,12 @@ export async function getSimilarProducts(
     JOIN variant_price vp ON vp.variant_id = pv.id
     WHERE p.category_id = ${source.product.categoryId}
       AND p.id <> ${source.productId}
-    ORDER BY (${brand}::text IS NOT NULL AND p.brand = ${brand}) DESC,
-             vp.site_count DESC,
-             pv.created_at DESC
+    ORDER BY
+      (CASE WHEN (${sourcePrice}::numeric = 0 OR (vp.min_price >= ${sourcePrice}::numeric * 0.25 AND vp.min_price <= ${sourcePrice}::numeric * 4.0)) THEN 0 ELSE 1 END) ASC,
+      (CASE WHEN ${brand}::text IS NOT NULL AND p.brand = ${brand} THEN 0 ELSE 1 END) ASC,
+      ABS(vp.min_price - ${sourcePrice}::numeric) ASC,
+      vp.site_count DESC,
+      pv.created_at DESC
     LIMIT ${limit}
   `;
   return getProductsByIds(rows.map((r) => r.variant_id));
