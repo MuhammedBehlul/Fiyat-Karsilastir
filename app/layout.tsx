@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google';
-import Link from 'next/link';
 import Navbar from '@/components/ui/Navbar';
+import Footer from '@/components/ui/Footer';
 import CompareTray from '@/components/CompareTray';
+import CookieNotice from '@/components/CookieNotice';
 import { siteUrl } from '@/lib/seo';
 import './globals.css';
 
@@ -66,16 +67,9 @@ export default function RootLayout({
       >
         <Navbar />
         <main className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8 py-8">{children}</main>
+        <Footer />
         <CompareTray />
-        <footer className="mt-12 border-t border-border py-8 text-center text-xs text-muted">
-          <p>
-            Fiyatlar günde bir kez ilgili sitelerden otomatik derlenir; satın alma öncesi güncel
-            fiyatı satıcı sitesinde doğrulayın.
-          </p>
-          <Link href="/admin" className="mt-2 inline-block hover:text-primary">
-            Scraping logları
-          </Link>
-        </footer>
+        <CookieNotice />
       </body>
     </html>
   );

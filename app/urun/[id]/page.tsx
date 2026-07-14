@@ -7,6 +7,8 @@ import JsonLd from '@/components/JsonLd';
 import PriceList from '@/components/PriceList';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import ProductCard from '@/components/ProductCard';
+import ProductImage from '@/components/ProductImage';
+import ShareButtons from '@/components/ShareButtons';
 import SiteBadge from '@/components/SiteBadge';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import { getPriceHistory, getProductWithPrices } from '@/lib/cached';
@@ -15,7 +17,7 @@ import { getCurrentUser } from '@/lib/currentUser';
 import { getSimilarProducts } from '@/lib/queries';
 import { buildChartRows, findLowestEver } from '@/lib/history';
 import { calcSavings, formatPrice } from '@/lib/normalize';
-import { buildBreadcrumbJsonLd, buildProductJsonLd } from '@/lib/seo';
+import { buildBreadcrumbJsonLd, buildProductJsonLd, siteUrl } from '@/lib/seo';
 import { CATEGORIES, SITE_LABELS, type CategorySlug } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -90,19 +92,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
       {productJsonLd && <JsonLd data={productJsonLd} />}
       <Breadcrumb items={breadcrumbItems} />
       <section className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6 md:gap-8 rounded-3xl border border-border bg-surface p-6 shadow-premium">
-        <div className="flex items-center justify-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100 h-56 md:h-full relative overflow-hidden group">
+        <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 h-56 md:h-full min-h-56 relative overflow-hidden group">
           <div className="absolute left-3 top-3 z-10">
             <CompareToggle variantId={product.id} />
           </div>
           <div className="absolute right-3 top-3 z-10">
             <FavoriteButton variantId={product.id} initialActive={favorited} />
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element -- harici CDN görselleri */}
-          <img
-            src={product.imageUrl ?? '/placeholder.svg'}
+          <ProductImage
+            src={product.imageUrl}
             alt={product.name}
-            referrerPolicy="no-referrer"
-            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, 240px"
+            priority
+            className="transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className="flex flex-col justify-center gap-3.5">
@@ -137,6 +139,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 🏷️ Tüm zamanların en düşüğü: {formatPrice(lowestEver.price)} ({new Date(lowestEver.date).toLocaleDateString('tr-TR')})
               </span>
             )}
+          </div>
+
+          <div className="mt-1 border-t border-border/60 pt-3.5">
+            <ShareButtons url={siteUrl(`/urun/${product.id}`)} title={product.name} />
           </div>
         </div>
       </section>

@@ -12,6 +12,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: siteUrl('/'), changeFrequency: 'daily', priority: 1 },
     { url: siteUrl('/indirimdekiler'), changeFrequency: 'daily', priority: 0.7 },
     { url: siteUrl('/nasil-calisir'), changeFrequency: 'monthly', priority: 0.3 },
+    { url: siteUrl('/gizlilik'), changeFrequency: 'yearly', priority: 0.2 },
+    { url: siteUrl('/kvkk'), changeFrequency: 'yearly', priority: 0.2 },
+    { url: siteUrl('/cerez-politikasi'), changeFrequency: 'yearly', priority: 0.2 },
+    { url: siteUrl('/kullanim-kosullari'), changeFrequency: 'yearly', priority: 0.2 },
   ];
 
   const categoryRoutes: MetadataRoute.Sitemap = Object.keys(CATEGORIES).map((slug) => ({

@@ -1,5 +1,6 @@
 import type { ProductWithPrices } from '@/lib/types';
 import { formatPrice } from '@/lib/normalize';
+import { affiliateUrl, isAffiliateConfigured } from '@/lib/affiliate';
 import SiteBadge from './SiteBadge';
 
 // Bir ürünün site fiyatlarını karşılaştırır. Tek markup, grid ile responsive:
@@ -28,9 +29,9 @@ export default function PriceList({ prices }: { prices: ProductWithPrices['price
           return (
             <li key={p.siteName} className="group/item">
               <a
-                href={p.productUrl}
+                href={affiliateUrl(p.productUrl, p.siteName)}
                 target="_blank"
-                rel="noopener noreferrer nofollow"
+                rel={`noopener noreferrer nofollow${isAffiliateConfigured(p.siteName) ? ' sponsored' : ''}`}
                 className={`flex min-h-16 items-center justify-between gap-3 px-5 py-3.5 transition-colors sm:grid sm:grid-cols-[1.5fr_1.2fr_1fr_1fr_auto] sm:gap-6 ${
                   isCheapest ? 'border-l-4 border-l-success bg-success-soft/50' : 'bg-white hover:bg-slate-50/50'
                 }`}

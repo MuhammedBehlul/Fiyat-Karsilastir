@@ -9,6 +9,7 @@ import { TrendDownIcon, TrendUpIcon } from './ui/icons';
 import { SITE_COLOR_VAR } from './SiteBadge';
 import CompareToggle from './CompareToggle';
 import FavoriteButton from './FavoriteButton';
+import ProductImage from './ProductImage';
 import { cx } from './ui/cx';
 
 const COMPACT_SITE_LABELS: Record<SiteName, string> = {
@@ -82,14 +83,12 @@ export default function ProductCard({
         </div>
       )}
       <Link href={`/urun/${product.id}`} className="flex flex-1 flex-col">
-        <div className="flex h-44 items-center justify-center p-6 pb-4 bg-slate-50/50 rounded-2xl overflow-hidden relative">
-          {/* eslint-disable-next-line @next/next/no-img-element -- görseller 5 farklı harici CDN'den geliyor */}
-          <img
-            src={product.imageUrl ?? '/placeholder.svg'}
+        <div className="relative h-44 p-6 pb-4 bg-slate-50/50 rounded-2xl overflow-hidden">
+          <ProductImage
+            src={product.imageUrl}
             alt={product.name}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            className="transition-transform duration-500 group-hover:scale-105"
           />
         </div>
 
