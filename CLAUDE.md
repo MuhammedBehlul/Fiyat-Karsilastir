@@ -9,6 +9,7 @@ npm run dev                    # Next.js dev server (Turbopack), port 3000
 npm run build                  # production build (Turbopack) — do NOT run while dev server is up, corrupts .next
 npm run start                  # serve a production build
 npm run lint                   # eslint (next/core-web-vitals + next/typescript)
+npm test                       # vitest unit tests (tests/ — variant parsing, matching, normalize, auth crypto)
 npx tsc --noEmit                # typecheck only
 
 npx prisma migrate dev         # apply schema changes locally (expand/contract pattern for live data — see Data model)
@@ -26,9 +27,9 @@ npx tsx scrapers/approve-match-reviews.ts [--apply] [--min=0.85]  # auto-merge h
 npx tsx scrapers/backfill-brands.ts [--apply]      # re-detect brand on existing null-brand Product rows after extending the BRANDS dict (dry-run by default)
 ```
 
-There is no automated test suite in this repo. Verify changes with `npx tsc --noEmit`, `npm run lint`, `npm run build`, and by manually exercising the affected pages against the dev server (or a Playwright script for interaction states like hover/focus that curl can't check).
+Unit tests (`tests/`, vitest) cover the pure logic only: title parsing, cross-store matching rules, price/image normalization, and auth crypto. UI/data-layer changes still need manual verification against the dev server (or a Playwright script for interaction states like hover/focus that curl can't check) plus `npx tsc --noEmit`, `npm run lint`, `npm run build`. CI (`.github/workflows/ci.yml`) runs lint + typecheck + tests + a production build on every push/PR — the build step uses placeholder DB env vars on purpose (build-time queries catch and degrade), so a CI pass does not prove queries work.
 
-Env vars: `DATABASE_URL` (pooler, port 6543, `pgbouncer=true`) and `DIRECT_URL` (direct, port 5432, used by Prisma CLI/migrations) — see `.env.example`. Optional `REVALIDATE_URL` / `REVALIDATE_TOKEN`: if set, the scraper POSTs to `/api/revalidate` after each run to drop the Next.js cache immediately instead of waiting out the 1h TTL; silently skipped if unset.
+Env vars: `DATABASE_URL` (pooler, port 6543, `pgbouncer=true`) and `DIRECT_URL` (direct, port 5432, used by Prisma CLI/migrations) — see `.env.example` (which also documents the optional auth/email/affiliate/webhook vars). `AUTH_SECRET` is required for user sessions. Optional `REVALIDATE_URL` / `REVALIDATE_TOKEN`: if set, the scraper POSTs to `/api/revalidate` after each run to drop the Next.js cache immediately instead of waiting out the 1h TTL; silently skipped if unset. Optional `ERROR_WEBHOOK_URL`: uncaught server errors POST there as JSON (`instrumentation.ts` `onRequestError`); unset = disabled.
 
 ## Architecture
 
