@@ -4,6 +4,7 @@
 // eşleşmeler MatchReview'a düşer.
 
 import { prisma } from '../lib/db';
+import { Prisma } from '../lib/generated/prisma/client';
 import { parseProductTitle } from '../lib/variant';
 import {
   buildAttrValues,
@@ -175,17 +176,41 @@ export async function saveProducts(
         });
         outcome.reviewLogged++;
       }
-      const created = await prisma.product.create({
-        data: {
-          brand: parsed.brand,
-          model: parsed.model,
-          modelKey: parsed.modelKey,
-          imageUrl: p.imageUrl,
-          categoryId: categoryIds.get(p.categorySlug),
-        },
-        select: { id: true },
-      });
-      product = { id: created.id, brand: parsed.brand, modelKey: parsed.modelKey, variants: [] };
+      // Siteler artık paralel (ayrı süreç/job) taranıyor: iki site aynı ürünü
+      // aynı anda "yeni" sanıp ikisi de create deneyebilir. byModelKey her
+      // sürecin KENDİ başlangıç anındaki DB anlık görüntüsü olduğundan bunu
+      // önceden göremez — ikinci create() unique constraint (model_key) ile
+      // çakışır. Bu durumda çökmek yerine, o an DB'de kazanan kaydı okuyup
+      // onu kullan (create-or-fetch, sessiz kilit yarışı çözümü).
+      try {
+        const created = await prisma.product.create({
+          data: {
+            brand: parsed.brand,
+            model: parsed.model,
+            modelKey: parsed.modelKey,
+            imageUrl: p.imageUrl,
+            categoryId: categoryIds.get(p.categorySlug),
+          },
+          select: { id: true },
+        });
+        product = { id: created.id, brand: parsed.brand, modelKey: parsed.modelKey, variants: [] };
+      } catch (err) {
+        // P2002 = unique constraint ihlali. modelKey, Product'taki TEK unique
+        // alan olduğundan (schema.prisma) bu create()'in P2002 ile
+        // başarısız olabileceği tek sebep budur — meta.target'ı ayrıca
+        // doğrulamaya gerek yok (üstelik @prisma/adapter-pg ile meta şekli
+        // sürücüye özgü/iç içe geliyor, klasik meta.target dizisi değil).
+        const isRaceConflict = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
+        if (!isRaceConflict) throw err;
+        const existing = await prisma.product.findUniqueOrThrow({
+          where: { modelKey: parsed.modelKey },
+          select: { id: true, brand: true, modelKey: true, variants: { select: { id: true, attrs: true } } },
+        });
+        product = {
+          ...existing,
+          variants: existing.variants.map((v) => ({ id: v.id, attrs: (v.attrs ?? {}) as AttrValues })),
+        };
+      }
       byModelKey.set(parsed.modelKey, product);
     }
 
