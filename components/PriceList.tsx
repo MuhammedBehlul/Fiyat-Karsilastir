@@ -1,5 +1,5 @@
 import type { ProductWithPrices } from '@/lib/types';
-import { formatPrice } from '@/lib/normalize';
+import { formatDate, formatPrice } from '@/lib/normalize';
 import { affiliateUrl, isAffiliateConfigured } from '@/lib/affiliate';
 import SiteBadge from './SiteBadge';
 
@@ -22,10 +22,7 @@ export default function PriceList({ prices }: { prices: ProductWithPrices['price
           const diff = p.price - cheapest.price;
           const isCheapest = i === 0;
           const diffLabel = isCheapest ? 'En Ucuz' : diff === 0 ? 'Eşit fiyat' : `+${formatPrice(diff)}`;
-          const updated = new Date(p.scrapedAt).toLocaleDateString('tr-TR', {
-            day: '2-digit',
-            month: '2-digit',
-          });
+          const updated = formatDate(p.scrapedAt, { day: '2-digit', month: '2-digit' });
           return (
             <li key={p.siteName} className="group/item">
               <a

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
+import { formatTime } from '@/lib/normalize';
 import { CATEGORIES, SITES, SITE_LABELS, type CategorySlug, type SiteName } from '@/lib/types';
 
 interface SiteResultSummary {
@@ -243,7 +244,7 @@ export default function LocalScrapeTrigger() {
         {status?.finishedAt && !running && (
           <span className="text-sm text-muted">
             Son çalışma: exit {status.exitCode} ·{' '}
-            {new Date(status.finishedAt).toLocaleTimeString('tr-TR')}
+            {formatTime(status.finishedAt)}
           </span>
         )}
         {error && <span className="text-sm text-danger">{error}</span>}

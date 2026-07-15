@@ -16,7 +16,7 @@ import { getAlertForVariant, getFavoriteVariantIds } from '@/lib/accounts';
 import { getCurrentUser } from '@/lib/currentUser';
 import { getSimilarProducts } from '@/lib/queries';
 import { buildChartRows, findLowestEver } from '@/lib/history';
-import { calcSavings, formatPrice } from '@/lib/normalize';
+import { calcSavings, formatDate, formatPrice } from '@/lib/normalize';
 import { buildBreadcrumbJsonLd, buildProductJsonLd, siteUrl } from '@/lib/seo';
 import { CATEGORIES, SITE_LABELS, type CategorySlug } from '@/lib/types';
 
@@ -136,7 +136,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             )}
             {lowestEver && cheapest && lowestEver.price < cheapest.price && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200/55 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-                🏷️ Tüm zamanların en düşüğü: {formatPrice(lowestEver.price)} ({new Date(lowestEver.date).toLocaleDateString('tr-TR')})
+                🏷️ Tüm zamanların en düşüğü: {formatPrice(lowestEver.price)} ({formatDate(lowestEver.date)})
               </span>
             )}
           </div>
@@ -170,7 +170,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {lowestEver ? formatPrice(lowestEver.price) : '—'}
             </span>
             <span className="text-[10px] text-muted">
-              {lowestEver ? new Date(lowestEver.date).toLocaleDateString('tr-TR') : 'Kayıt bulunmuyor'}
+              {lowestEver ? formatDate(lowestEver.date) : 'Kayıt bulunmuyor'}
             </span>
           </div>
           <div className="rounded-2xl border border-border bg-gradient-to-br from-danger-soft/50 to-transparent p-5 flex flex-col gap-1 shadow-sm hover:border-danger/35 hover:scale-[1.01] hover:shadow-md transition-all duration-200">

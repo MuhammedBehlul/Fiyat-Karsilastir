@@ -13,6 +13,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import type { ChartRow } from '@/lib/history';
+import { formatDate } from '@/lib/normalize';
 import { SITES, SITE_LABELS, type SiteName } from '@/lib/types';
 
 // dataviz skill ile doğrulanmış kategorik palet (lightness/chroma/contrast PASS,
@@ -52,7 +53,7 @@ export default function PriceHistoryChart({ rows }: { rows: ChartRow[] }) {
             tick={{ fontSize: 12, fill: SLATE }}
             axisLine={{ stroke: HAIRLINE }}
             tickLine={false}
-            tickFormatter={(d: string) => new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+            tickFormatter={(d: string) => formatDate(d, { day: 'numeric', month: 'short' })}
           />
           <YAxis
             tick={{ fontSize: 12, fill: SLATE }}
@@ -64,7 +65,7 @@ export default function PriceHistoryChart({ rows }: { rows: ChartRow[] }) {
           <Tooltip
             contentStyle={{ borderColor: HAIRLINE, borderRadius: 8, fontSize: 13 }}
             formatter={(value) => new Intl.NumberFormat('tr-TR').format(Number(value)) + ' ₺'}
-            labelFormatter={(d) => new Date(String(d)).toLocaleDateString('tr-TR')}
+            labelFormatter={(d) => formatDate(String(d))}
           />
           <Legend wrapperStyle={{ fontSize: 12, color: SLATE }} />
           {activeSites.map((site) => (

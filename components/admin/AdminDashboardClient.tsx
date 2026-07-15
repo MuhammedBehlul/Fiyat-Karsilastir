@@ -7,7 +7,7 @@ import ScrapeTrigger from '@/components/admin/ScrapeTrigger';
 import LocalScrapeTrigger from '@/components/admin/LocalScrapeTrigger';
 import { SITE_LABELS } from '@/lib/types';
 import type { SiteName } from '@/lib/types';
-import { formatPrice } from '@/lib/normalize';
+import { formatDate, formatDateTime, formatPrice, formatTime } from '@/lib/normalize';
 import Badge from '@/components/ui/Badge';
 
 interface ScrapeRun {
@@ -122,8 +122,8 @@ export default function AdminDashboardClient({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label="Son Tarama"
-          value={lastRunAt ? new Date(lastRunAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '—'}
-          hint={lastRunAt ? new Date(lastRunAt).toLocaleDateString('tr-TR') : undefined}
+          value={lastRunAt ? formatTime(lastRunAt, { hour: '2-digit', minute: '2-digit' }) : '—'}
+          hint={lastRunAt ? formatDate(lastRunAt) : undefined}
           borderColor="border-primary"
           icon={
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -250,7 +250,7 @@ export default function AdminDashboardClient({
                           {SITE_LABELS[r.siteName as SiteName] ?? r.siteName}
                         </td>
                         <td className="p-3.5 text-xs text-muted tabular-nums">
-                          {new Date(r.startedAt).toLocaleString('tr-TR', {
+                          {formatDateTime(r.startedAt, {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',
@@ -360,11 +360,7 @@ export default function AdminDashboardClient({
                         {formatPrice(r.price)}
                       </td>
                       <td className="p-3.5 text-xs text-muted tabular-nums">
-                        {new Date(r.createdAt).toLocaleDateString('tr-TR', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {formatDate(r.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                     </tr>
                   ))}

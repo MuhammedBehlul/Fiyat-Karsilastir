@@ -25,6 +25,26 @@ export function formatPrice(price: number, currency = 'TRY'): string {
   }).format(price);
 }
 
+// Tarih/saat biçimlendirme: timeZone HER ZAMAN açıkça verilir. Vercel'de sunucu
+// UTC'de render eder, tarayıcı ise kullanıcının yerel saat dilimini (TR: UTC+3)
+// kullanır — açık timeZone olmadan aynı zaman damgası istemci hydration'ında
+// FARKLI bir tarih/saat metnine dönüşebilir (gece yarısına yakın kayıtlarda gün
+// bile kayabilir), bu da hem yanlış tarih gösterir hem de React hydration
+// uyuşmazlığına (#418) yol açar.
+const TR_TIMEZONE = 'Europe/Istanbul';
+
+export function formatDate(date: Date | string, opts: Intl.DateTimeFormatOptions = {}): string {
+  return new Date(date).toLocaleDateString('tr-TR', { timeZone: TR_TIMEZONE, ...opts });
+}
+
+export function formatTime(date: Date | string, opts: Intl.DateTimeFormatOptions = {}): string {
+  return new Date(date).toLocaleTimeString('tr-TR', { timeZone: TR_TIMEZONE, ...opts });
+}
+
+export function formatDateTime(date: Date | string, opts: Intl.DateTimeFormatOptions = {}): string {
+  return new Date(date).toLocaleString('tr-TR', { timeZone: TR_TIMEZONE, ...opts });
+}
+
 /**
  * Bazı sitelerin ürün görseli <img>'inde `onerror="this.src='.../no-image.svg'"` gibi
  * bir fallback tanımlı oluyor; gerçek görsel CDN'de anlık başarısız olursa tarayıcı
