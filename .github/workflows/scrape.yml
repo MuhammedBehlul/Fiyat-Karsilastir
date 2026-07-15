@@ -9,7 +9,17 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Her site AYRI job olarak paralel çalışır (matrix) — sırayla TEK job'ta
+    # koşulduğunda Trendyol/N11 gibi yavaş siteler (gerçek koşularda 50-75 dk)
+    # tek bir 30 dk'lık timeout'u aşıp job'ı öldürüyor, ardından gelen tüm
+    # siteler HİÇ başlamıyordu (ScrapeRun'da kalıcı "running" satırları ve
+    # yarım kalan taramalar bu yüzdendi). Matrix ile bir sitenin yavaşlaması/
+    # engellenmesi diğerlerini etkilemez.
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        site: [trendyol, hepsiburada, amazon, vatan, n11]
     steps:
       - uses: actions/checkout@v4
 
@@ -24,8 +34,10 @@ jobs:
       - name: Playwright Chromium kur
         run: npx playwright install --with-deps chromium
 
-      - name: Scraper'ları çalıştır
-        run: npm run scrape
+      - name: ${{ matrix.site }} scrape ediliyor
+        run: npm run scrape -- ${{ matrix.site }}
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
+          REVALIDATE_TOKEN: ${{ secrets.REVALIDATE_TOKEN }}
