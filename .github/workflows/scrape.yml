@@ -41,3 +41,8 @@ jobs:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
           REVALIDATE_URL: ${{ secrets.REVALIDATE_URL }}
           REVALIDATE_TOKEN: ${{ secrets.REVALIDATE_TOKEN }}
+          # 5'ten 8'e çıkarıldı: kategori sayfalaması yeni ürün bulamayınca zaten
+          # erken duruyor, bu yüzden ek derinlik yalnızca gerçekten stoğu 5
+          # sayfadan derin olan kategorilerde süreyi uzatır. 120dk job bütçesiyle
+          # rahat sığar (Hepsiburada ~30dk, N11 ~30-58dk, 5 sayfada).
+          SCRAPE_MAX_PAGES: '8'
